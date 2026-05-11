@@ -1,0 +1,40 @@
+name: fitness_app
+description: Fitness & Calorie Tracker App
+
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.1
+  google_fonts: ^6.2.1
+  provider: ^6.1.2
+  shared_preferences: ^2.3.2
+  fluttertoast: ^8.2.6
+  intl: ^0.19.0
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  fl_chart: ^0.66.0
+  image_picker: ^1.0.7
+  path_provider: ^2.1.2
+  flutter_local_notifications: ^17.1.2
+  timezone: ^0.9.4
+  mobile_scanner: ^6.0.11
+  google_generative_ai: ^0.4.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.8
+  hive_generator: ^2.0.1
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - images/
