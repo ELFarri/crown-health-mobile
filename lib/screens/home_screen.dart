@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fitness_app/app_theme.dart';
 import 'package:fitness_app/widgets/body_measurement.dart';
@@ -69,6 +69,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final userProvider = context.watch<UserProvider>();
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Calal',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(gradient: AppTheme.primaryGradient),
+        ),
+        elevation: 2,
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
       drawer: CustomDrawer(
         userName: userProvider.name,
         userEmail: 'user@test.com',
@@ -86,22 +97,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           });
         },
       ),
-      body: Stack(
-        children: [
-          // Main Content
-          _getBody(userProvider),
-          
-          // Bottom Navigation
-          BottomBarView(
-            tabIconsList: tabIconsList,
-            changeIndex: (int index) {
-              setState(() {
-                currentIndex = index;
-              });
-            },
-            addClick: () => _showQuickAddMenu(),
-          ),
-        ],
+      body: _getBody(userProvider),
+      bottomNavigationBar: BottomBarView(
+        tabIconsList: tabIconsList,
+        changeIndex: (int index) {
+          setState(() {
+            currentIndex = index;
+          });
+        },
+        addClick: () => _showQuickAddMenu(),
       ),
     );
   }
@@ -225,92 +229,56 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _buildDashboard(UserProvider userProvider) {
     final mealProvider = context.watch<MealProvider>();
     
-    return Column(
-      children: [
-        // App Bar
-        Container(
-          height: AppBar().preferredSize.height + MediaQuery.of(context).padding.top,
-          decoration: BoxDecoration(
-            gradient: AppTheme.primaryGradient,
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.gray.withOpacity(0.2),
-                offset: Offset(0, 2),
-                blurRadius: 8,
-              ),
-            ],
+    return SingleChildScrollView(
+      padding: EdgeInsets.only(bottom: 100), // Adjusted for bottom bar
+      child: Column(
+        children: [
+          // Body Measurement
+          BodyMeasurementView(
+            animationController: _animationController,
+            animation: _mainScreenAnimation,
+            weight: userProvider.weight,
+            height: userProvider.height,
+            bmi: userProvider.bmi,
+            bmiStatus: userProvider.bmiStatus,
           ),
-          child: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            title: Text(
-              'Dashboard', 
-              style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)
-            ),
-            actions: [
-              IconButton(
-                icon: Icon(Icons.notifications, color: Colors.white),
-                onPressed: () {},
-              ),
-            ],
+          WeightChartView(),
+          StatisticsView(
+            animationController: _animationController,
+            animation: _mainScreenAnimation,
           ),
-        ),
-        
-        // Scrollable Content
-        Expanded(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.only(bottom: 100), // Adjusted for bottom bar
-            child: Column(
+          // Water & Diet Cards
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
               children: [
-                // Body Measurement
-                BodyMeasurementView(
-                  animationController: _animationController,
+                Expanded(child: WaterView(animationController: _animationController, animation: _mainScreenAnimation)),
+                SizedBox(width: 12),
+                Expanded(child: MediterraneanDietView(
+                  animationController: _animationController, 
                   animation: _mainScreenAnimation,
-                  weight: userProvider.weight,
-                  height: userProvider.height,
-                  bmi: userProvider.bmi,
-                  bmiStatus: userProvider.bmiStatus,
-                ),
-                WeightChartView(),
-                StatisticsView(
-                  animationController: _animationController,
-                  animation: _mainScreenAnimation,
-                ),
-                // Water & Diet Cards
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      Expanded(child: WaterView(animationController: _animationController, animation: _mainScreenAnimation)),
-                      SizedBox(width: 16),
-                      Expanded(child: MediterraneanDietView(
-                        animationController: _animationController, 
-                        animation: _mainScreenAnimation,
-                        targetCalories: userProvider.targetCalories,
-                        eatenCalories: mealProvider.totalCalories,
-                      )),
-                    ],
-                  ),
-                ),
-                
-                // Workout & Glass
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      Expanded(child: WorkoutView(animationController: _animationController, animation: _mainScreenAnimation)),
-                      SizedBox(width: 16),
-                      Expanded(child: GlassView(animationController: _animationController, animation: _mainScreenAnimation)),
-                    ],
-                  ),
-                ),
-                
-                SizedBox(height: 24),
+                  targetCalories: userProvider.targetCalories,
+                  eatenCalories: mealProvider.totalCalories,
+                )),
               ],
             ),
           ),
-        ),
-      ],
+          
+          // Workout & Glass
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(child: WorkoutView(animationController: _animationController, animation: _mainScreenAnimation)),
+                SizedBox(width: 12),
+                Expanded(child: GlassView(animationController: _animationController, animation: _mainScreenAnimation)),
+              ],
+            ),
+          ),
+          
+          SizedBox(height: 24),
+        ],
+      ),
     );
   }
 }
