@@ -123,7 +123,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // --- STEPS ---
 
-  Widget _buildStepIdentity() {
+  Widget _buildStepIdentity() { return SingleChildScrollView(child: Padding(
     return Padding(
       padding: const EdgeInsets.all(40.0),
       child: Column(
@@ -202,7 +202,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildStepAccount() {
+  Widget _buildStepAccount() { return SingleChildScrollView(child: Padding(
     return Padding(
       padding: const EdgeInsets.all(40.0),
       child: Column(
