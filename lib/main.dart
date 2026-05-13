@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
     final userProvider = context.watch<UserProvider>();
     
     return MaterialApp(
-      title: 'Crown Health',
+      title: 'Calal',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
