@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'dart:ui';
@@ -123,8 +123,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // --- STEPS ---
 
-  Widget _buildStepIdentity() { return SingleChildScrollView(child: Padding(
-    return Padding(
+  Widget _buildStepIdentity() {
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(40.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -135,9 +135,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Icon(Icons.auto_awesome_rounded, size: 60, color: AppTheme.nearlyDarkBlue),
           ),
           SizedBox(height: 40),
-          Text("Welcome to\nCrown Health", textAlign: TextAlign.center, style: GoogleFonts.outfit(fontSize: 36, fontWeight: FontWeight.w900, color: AppTheme.darkText, height: 1.1)),
+          Text("Welcome to\nCalal", textAlign: TextAlign.center, style: GoogleFonts.outfit(fontSize: 36, fontWeight: FontWeight.w900, color: AppTheme.darkText, height: 1.1)),
           SizedBox(height: 16),
-          Text("Let's build your royal health profile. First, how should we call you?", textAlign: TextAlign.center, style: GoogleFonts.outfit(fontSize: 16, color: Colors.grey[600], height: 1.5)),
+          Text("Let's build your health profile. First, how should we call you?", textAlign: TextAlign.center, style: GoogleFonts.outfit(fontSize: 16, color: Colors.grey[600], height: 1.5)),
           SizedBox(height: 60),
           _buildGlassInput(hint: "Your Full Name", icon: Icons.person_rounded, controller: _nameController, validator: (v) => v!.isEmpty ? "Name is required" : null),
         ],
@@ -146,7 +146,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildStepBio() {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(40.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -169,7 +169,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildStepStats() {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(40.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -202,8 +202,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildStepAccount() { return SingleChildScrollView(child: Padding(
-    return Padding(
+  Widget _buildStepAccount() {
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(40.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
