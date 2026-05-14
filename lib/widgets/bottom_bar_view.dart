@@ -66,7 +66,7 @@ class _BottomBarViewState extends State<BottomBarView>
                       curve: Curves.fastOutSlowIn,
                     ))
                     .value * 38.0,
-              ),
+  
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -85,16 +85,16 @@ class _BottomBarViewState extends State<BottomBarView>
                                   curve: Curves.fastOutSlowIn,
                                 ))
                                 .value * 64,
-                          ),
+              
                           _buildTabIcon(2),
                           _buildTabIcon(3),
                         ],
-                      ),
-                    ),
-                  ),
+          
+        
+      
                   SizedBox(height: MediaQuery.of(context).padding.bottom),
                 ],
-              ),
+  
             );
           },
         ),
@@ -117,8 +117,8 @@ class _BottomBarViewState extends State<BottomBarView>
                       CurvedAnimation(
                         parent: _animationController,
                         curve: Curves.fastOutSlowIn,
-                      ),
-                    ),
+          
+        
                     child: Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -128,16 +128,16 @@ class _BottomBarViewState extends State<BottomBarView>
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                        ),
+            
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
                             color: AppTheme.nearlyDarkBlue.withOpacity(0.4),
                             offset: const Offset(8, 16),
                             blurRadius: 16,
-                          ),
+              
                         ],
-                      ),
+          
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
@@ -147,15 +147,15 @@ class _BottomBarViewState extends State<BottomBarView>
                             Icons.add,
                             color: Colors.white,
                             size: 32,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+              
+            
+          
+        
+      
+    
+  
+
+
         ),
       ],
     );
@@ -221,7 +221,7 @@ class _TabIconsState extends State<TabIcons> with TickerProviderStateMixin {
         child: InkWell(
           splashColor: Colors.transparent,
           onTap: widget.tabIconData.isSelected ? null : setAnimation,
-          // //
+          
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -231,8 +231,8 @@ class _TabIconsState extends State<TabIcons> with TickerProviderStateMixin {
                     CurvedAnimation(
                       parent: widget.tabIconData.animationController!,
                       curve: const Interval(0.1, 1.0, curve: Curves.fastOutSlowIn),
-                    ),
-                  ),
+        
+      
                   child: Image.asset(
                     widget.tabIconData.isSelected
                         ? widget.tabIconData.selectedImage
@@ -243,9 +243,9 @@ class _TabIconsState extends State<TabIcons> with TickerProviderStateMixin {
                       color: widget.tabIconData.isSelected 
                           ? AppTheme.nearlyDarkBlue 
                           : AppTheme.gray,
-                    ),
-                  ),
-                ),
+        
+      
+    
                 
                 // Selection Indicators
                 if (widget.tabIconData.isSelected) ...[
@@ -257,18 +257,18 @@ class _TabIconsState extends State<TabIcons> with TickerProviderStateMixin {
                         CurvedAnimation(
                           parent: widget.tabIconData.animationController!,
                           curve: const Interval(0.2, 1.0, curve: Curves.fastOutSlowIn),
-                        ),
-                      ),
+            
+          
                       child: Container(
                         width: 8,
                         height: 8,
                         decoration: BoxDecoration(
                           color: AppTheme.nearlyDarkBlue,
                           shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                  ),
+            
+          
+        
+      
                   Positioned(
                     top: 0,
                     left: 6,
@@ -278,18 +278,18 @@ class _TabIconsState extends State<TabIcons> with TickerProviderStateMixin {
                         CurvedAnimation(
                           parent: widget.tabIconData.animationController!,
                           curve: const Interval(0.5, 0.8, curve: Curves.fastOutSlowIn),
-                        ),
-                      ),
+            
+          
                       child: Container(
                         width: 4,
                         height: 4,
                         decoration: BoxDecoration(
                           color: AppTheme.nearlyDarkBlue,
                           shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                  ),
+            
+          
+        
+      
                   Positioned(
                     top: 6,
                     right: 8,
@@ -299,22 +299,22 @@ class _TabIconsState extends State<TabIcons> with TickerProviderStateMixin {
                         CurvedAnimation(
                           parent: widget.tabIconData.animationController!,
                           curve: const Interval(0.5, 0.6, curve: Curves.fastOutSlowIn),
-                        ),
-                      ),
+            
+          
                       child: Container(
                         width: 6,
                         height: 6,
                         decoration: BoxDecoration(
                           color: AppTheme.nearlyDarkBlue,
                           shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                  ),
+            
+          
+        
+      
                 ],
               ],
-            ),
-          ),
+
+
         ),
       ),
     );
