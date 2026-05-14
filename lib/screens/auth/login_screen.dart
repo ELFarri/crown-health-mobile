@@ -139,14 +139,14 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     
-    final error = await AuthService.login(_emailController.text.trim(), _passwordController.text);
+    final success = await AuthService.login(_emailController.text.trim(), _passwordController.text);
 
-    if (error == null) {
+    if (success) {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomeScreen()));
     } else {
       setState(() {
         _isLoading = false;
-        _errorMessage = error;
+        _errorMessage = "Login failed. Please check your credentials.";
       });
     }
   }
