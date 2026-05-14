@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fitness_app/app_theme.dart';
 import 'package:fitness_app/widgets/body_measurement.dart';
@@ -71,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Calal',
+          currentIndex == 0 ? 'Calal' : currentIndex == 1 ? 'Training' : currentIndex == 2 ? 'Nutrition' : 'Profile',
           style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         flexibleSpace: Container(

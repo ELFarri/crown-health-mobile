@@ -221,7 +221,7 @@ class _TabIconsState extends State<TabIcons> with TickerProviderStateMixin {
         child: InkWell(
           splashColor: Colors.transparent,
           onTap: widget.tabIconData.isSelected ? null : setAnimation,
-          child: IgnorePointer(
+          // child: IgnorePointer(
             child: Stack(
               alignment: Alignment.center,
               children: [
