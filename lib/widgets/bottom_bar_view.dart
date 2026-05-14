@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:fitness_app/app_theme.dart';
 import '../models/tabIcon_data.dart';
@@ -52,7 +52,6 @@ class _BottomBarViewState extends State<BottomBarView>
     return Stack(
       alignment: Alignment.bottomCenter,
       children: [
-        // Main Bottom Bar
         AnimatedBuilder(
           animation: _animationController,
           builder: (context, child) {
@@ -66,7 +65,7 @@ class _BottomBarViewState extends State<BottomBarView>
                       curve: Curves.fastOutSlowIn,
                     ))
                     .value * 38.0,
-  
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -85,21 +84,19 @@ class _BottomBarViewState extends State<BottomBarView>
                                   curve: Curves.fastOutSlowIn,
                                 ))
                                 .value * 64,
-              
+                          ),
                           _buildTabIcon(2),
                           _buildTabIcon(3),
                         ],
-          
-        
-      
+                      ),
+                    ),
+                  ),
                   SizedBox(height: MediaQuery.of(context).padding.bottom),
                 ],
-  
+              ),
             );
           },
         ),
-        
-        // Floating Add Button
         Padding(
           padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
           child: SizedBox(
@@ -117,8 +114,8 @@ class _BottomBarViewState extends State<BottomBarView>
                       CurvedAnimation(
                         parent: _animationController,
                         curve: Curves.fastOutSlowIn,
-          
-        
+                      ),
+                    ),
                     child: Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -128,16 +125,16 @@ class _BottomBarViewState extends State<BottomBarView>
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-            
+                        ),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
                             color: AppTheme.nearlyDarkBlue.withOpacity(0.4),
                             offset: const Offset(8, 16),
                             blurRadius: 16,
-              
+                          ),
                         ],
-          
+                      ),
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
@@ -147,15 +144,15 @@ class _BottomBarViewState extends State<BottomBarView>
                             Icons.add,
                             color: Colors.white,
                             size: 32,
-              
-            
-          
-        
-      
-    
-  
-
-
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -221,100 +218,42 @@ class _TabIconsState extends State<TabIcons> with TickerProviderStateMixin {
         child: InkWell(
           splashColor: Colors.transparent,
           onTap: widget.tabIconData.isSelected ? null : setAnimation,
-          
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Main Icon
-                ScaleTransition(
-                  scale: Tween<double>(begin: 0.88, end: 1.0).animate(
-                    CurvedAnimation(
-                      parent: widget.tabIconData.animationController!,
-                      curve: const Interval(0.1, 1.0, curve: Curves.fastOutSlowIn),
-        
-      
-                  child: Image.asset(
-                    widget.tabIconData.isSelected
-                        ? widget.tabIconData.selectedImage
-                        : widget.tabIconData.image,
-                    errorBuilder: (context, error, stackTrace) => Icon(
-                      Icons.home_outlined,
-                      size: 24,
-                      color: widget.tabIconData.isSelected 
-                          ? AppTheme.nearlyDarkBlue 
-                          : AppTheme.gray,
-        
-      
-    
-                
-                // Selection Indicators
-                if (widget.tabIconData.isSelected) ...[
-                  Positioned(
-                    top: 4,
-                    left: 6,
-                    child: ScaleTransition(
-                      scale: Tween<double>(begin: 0, end: 1).animate(
-                        CurvedAnimation(
-                          parent: widget.tabIconData.animationController!,
-                          curve: const Interval(0.2, 1.0, curve: Curves.fastOutSlowIn),
-            
-          
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: AppTheme.nearlyDarkBlue,
-                          shape: BoxShape.circle,
-            
-          
-        
-      
-                  Positioned(
-                    top: 0,
-                    left: 6,
-                    bottom: 8,
-                    child: ScaleTransition(
-                      scale: Tween<double>(begin: 0, end: 1).animate(
-                        CurvedAnimation(
-                          parent: widget.tabIconData.animationController!,
-                          curve: const Interval(0.5, 0.8, curve: Curves.fastOutSlowIn),
-            
-          
-                      child: Container(
-                        width: 4,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AppTheme.nearlyDarkBlue,
-                          shape: BoxShape.circle,
-            
-          
-        
-      
-                  Positioned(
-                    top: 6,
-                    right: 8,
-                    bottom: 0,
-                    child: ScaleTransition(
-                      scale: Tween<double>(begin: 0, end: 1).animate(
-                        CurvedAnimation(
-                          parent: widget.tabIconData.animationController!,
-                          curve: const Interval(0.5, 0.6, curve: Curves.fastOutSlowIn),
-            
-          
-                      child: Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: AppTheme.nearlyDarkBlue,
-                          shape: BoxShape.circle,
-            
-          
-        
-      
-                ],
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              ScaleTransition(
+                scale: Tween<double>(begin: 0.88, end: 1.0).animate(
+                  CurvedAnimation(
+                    parent: widget.tabIconData.animationController!,
+                    curve: const Interval(0.1, 1.0, curve: Curves.fastOutSlowIn),
+                  ),
+                ),
+                child: Image.asset(
+                  widget.tabIconData.isSelected
+                      ? widget.tabIconData.selectedImage
+                      : widget.tabIconData.image,
+                  errorBuilder: (context, error, stackTrace) => Icon(
+                    Icons.home_outlined,
+                    size: 24,
+                    color: widget.tabIconData.isSelected 
+                        ? AppTheme.nearlyDarkBlue 
+                        : AppTheme.gray,
+                  ),
+                ),
+              ),
+              if (widget.tabIconData.isSelected) ...[
+                Positioned(
+                  top: 4, left: 6,
+                  child: ScaleTransition(
+                    scale: Tween<double>(begin: 0, end: 1).animate(
+                      CurvedAnimation(parent: widget.tabIconData.animationController!, curve: const Interval(0.2, 1.0, curve: Curves.fastOutSlowIn)),
+                    ),
+                    child: Container(width: 8, height: 8, decoration: BoxDecoration(color: AppTheme.nearlyDarkBlue, shape: BoxShape.circle)),
+                  ),
+                ),
               ],
-
-
+            ],
+          ),
         ),
       ),
     );
@@ -329,48 +268,12 @@ class TabClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     final Path path = Path();
     final double v = radius * 2;
-
     path.lineTo(0, 0);
-    path.arcTo(
-      Rect.fromLTWH(0, 0, radius, radius),
-      math.pi,
-      math.pi / 2,
-      false,
-    );
-    path.arcTo(
-      Rect.fromLTWH(
-        (size.width / 2 - v / 2) - radius + v * 0.04,
-        0,
-        radius,
-        radius,
-      ),
-      3 * math.pi / 2,
-      math.pi * 7 / 18,
-      false,
-    );
-    path.arcTo(
-      Rect.fromLTWH(size.width / 2 - v / 2, -v / 2, v, v),
-      16 * math.pi / 18,
-      -12 * math.pi / 9,
-      false,
-    );
-    path.arcTo(
-      Rect.fromLTWH(
-        size.width - (size.width / 2 - v / 2) - v * 0.04,
-        0,
-        radius,
-        radius,
-      ),
-      7 * math.pi / 5,
-      math.pi * 7 / 18,
-      false,
-    );
-    path.arcTo(
-      Rect.fromLTWH(size.width - radius, 0, radius, radius),
-      3 * math.pi / 2,
-      math.pi / 2,
-      false,
-    );
+    path.arcTo(Rect.fromLTWH(0, 0, radius, radius), math.pi, math.pi / 2, false);
+    path.arcTo(Rect.fromLTWH((size.width / 2 - v / 2) - radius + v * 0.04, 0, radius, radius), 3 * math.pi / 2, math.pi * 7 / 18, false);
+    path.arcTo(Rect.fromLTWH(size.width / 2 - v / 2, -v / 2, v, v), 16 * math.pi / 18, -12 * math.pi / 9, false);
+    path.arcTo(Rect.fromLTWH(size.width - (size.width / 2 - v / 2) - v * 0.04, 0, radius, radius), 7 * math.pi / 5, math.pi * 7 / 18, false);
+    path.arcTo(Rect.fromLTWH(size.width - radius, 0, radius, radius), 3 * math.pi / 2, math.pi / 2, false);
     path.lineTo(size.width, 0);
     path.lineTo(size.width, size.height);
     path.lineTo(0, size.height);
