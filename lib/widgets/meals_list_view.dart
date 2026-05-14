@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../app_theme.dart';
 import '../screens/nutrition/food_search_screen.dart';
+import 'package:provider/provider.dart';
+import '../providers/meal_provider.dart';
 
 class MealsListView extends StatefulWidget {
   final AnimationController animationController;
@@ -18,39 +20,17 @@ class MealsListView extends StatefulWidget {
 }
 
 class _MealsListViewState extends State<MealsListView> {
-  final List<Map<String, dynamic>> _meals = [
-    {
-      'title': 'Breakfast',
-      'kcal': 525,
-      'imagePath': 'images/breakfast.png',
-      'foods': ['Bread', 'Egg', 'Avocado'],
-      'color': '#87A0E5',
-    },
-    {
-      'title': 'Lunch',
-      'kcal': 602,
-      'imagePath': 'images/lunch.png',
-      'foods': ['Chicken', 'Rice', 'Salad'],
-      'color': '#F56E98',
-    },
-    {
-      'title': 'Snack',
-      'kcal': 190,
-      'imagePath': 'images/snack.png',
-      'foods': ['Yogurt', 'Nuts'],
-      'color': '#F1B440',
-    },
-    {
-      'title': 'Dinner',
-      'kcal': 450,
-      'imagePath': 'images/dinner.png',
-      'foods': ['Fish', 'Vegetables'],
-      'color': '#4A6572',
-    },
+  final List<Map<String, dynamic>> _mealCategories = [
+    {'title': 'Breakfast', 'imagePath': 'images/breakfast.png', 'color': '#87A0E5'},
+    {'title': 'Lunch', 'imagePath': 'images/lunch.png', 'color': '#F56E98'},
+    {'title': 'Snack', 'imagePath': 'images/snack.png', 'color': '#F1B440'},
+    {'title': 'Dinner', 'imagePath': 'images/dinner.png', 'color': '#4A6572'},
   ];
 
   @override
   Widget build(BuildContext context) {
+    final mealProvider = context.watch<MealProvider>();
+    
     return AnimatedBuilder(
       animation: widget.animationController,
       builder: (context, child) {
@@ -63,10 +43,14 @@ class _MealsListViewState extends State<MealsListView> {
               width: double.infinity,
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _meals.length,
+                itemCount: _mealCategories.length,
                 scrollDirection: Axis.horizontal,
                 itemBuilder: (context, index) {
-                  return _buildMealCard(_meals[index]);
+                  final category = _mealCategories[index];
+                  final categoryMeals = mealProvider.todayMeals.where((m) => m.category == category['title']).toList();
+                  final int kcal = categoryMeals.fold(0, (sum, item) => sum + item.calories);
+                  
+                  return _buildMealCard(category, categoryMeals, kcal);
                 },
               ),
             ),
@@ -76,8 +60,8 @@ class _MealsListViewState extends State<MealsListView> {
     );
   }
 
-  Widget _buildMealCard(Map<String, dynamic> meal) {
-    Color mainColor = _hexToColor(meal['color']);
+  Widget _buildMealCard(Map<String, dynamic> category, List<FoodItem> meals, int kcal) {
+    Color mainColor = _hexToColor(category['color']);
     return Container(
       width: 150,
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
@@ -105,7 +89,7 @@ class _MealsListViewState extends State<MealsListView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  meal['title'],
+                  category['title'],
                   style: GoogleFonts.outfit(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -114,7 +98,7 @@ class _MealsListViewState extends State<MealsListView> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${meal['kcal']}\nkcal',
+                  '$kcal\nkcal',
                   style: GoogleFonts.outfit(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
@@ -122,23 +106,27 @@ class _MealsListViewState extends State<MealsListView> {
                   ),
                 ),
                 const Spacer(),
-                Wrap(
-                  spacing: 4,
-                  children: (meal['foods'] as List<String>)
-                      .take(2)
-                      .map((food) => Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: mainColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              food,
-                              style: TextStyle(fontSize: 10, color: mainColor, fontWeight: FontWeight.bold),
-                            ),
-                          ))
-                      .toList(),
-                ),
+                meals.isEmpty 
+                  ? Text('No items', style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey[400]))
+                  : Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: meals
+                        .take(2)
+                        .map((food) => Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: mainColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                food.name.split('(').first.trim(),
+                                style: TextStyle(fontSize: 10, color: mainColor, fontWeight: FontWeight.bold),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ))
+                        .toList(),
+                  ),
               ],
             ),
           ),
@@ -159,7 +147,7 @@ class _MealsListViewState extends State<MealsListView> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => FoodSearchScreen(mealName: meal['title'])),
+                    MaterialPageRoute(builder: (context) => FoodSearchScreen(mealName: category['title'])),
                   );
                 },
               ),
