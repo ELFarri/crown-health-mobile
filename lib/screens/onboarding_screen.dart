@@ -155,7 +155,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           SizedBox(height: 40),
           Text(
-            "Welcome to\nCrown Health",
+            "Welcome to\nCalal",
             textAlign: TextAlign.center,
             style: GoogleFonts.outfit(
               fontSize: 36, 

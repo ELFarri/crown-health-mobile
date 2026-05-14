@@ -84,7 +84,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 40),
             Center(
               child: Text(
-                'Crown Health v1.0.0',
+                'Calal v1.0.0',
                 style: GoogleFonts.outfit(color: Colors.grey, fontSize: 12),
               ),
             ),
