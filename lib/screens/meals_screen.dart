@@ -44,8 +44,9 @@ class _MealsScreenState extends State<MealsScreen> with TickerProviderStateMixin
       child: Stack(
         children: [
           ListView(
-            padding: EdgeInsets.fromLTRB(0, AppBar().preferredSize.height + MediaQuery.of(context).padding.top + 8, 0, 100),
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
             children: [
+              const SizedBox(height: 10),
               TitleView(
                 titleText: 'Nutrition Summary',
                 subText: 'Details',
@@ -91,54 +92,15 @@ class _MealsScreenState extends State<MealsScreen> with TickerProviderStateMixin
               ),
             ],
           ),
-          _getAppBarUI(),
           _buildFloatingAddButton(),
         ],
       ),
     );
   }
 
-  Widget _getAppBarUI() {
-    return Column(
-      children: [
-        Container(
-          height: AppBar().preferredSize.height + MediaQuery.of(context).padding.top,
-          decoration: BoxDecoration(
-            gradient: AppTheme.primaryGradient,
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.gray.withOpacity(0.2),
-                offset: Offset(0, 2),
-                blurRadius: 8,
-              ),
-            ],
-          ),
-          child: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: Builder(
-              builder: (context) => IconButton(
-                icon: Icon(Icons.menu, color: Colors.white),
-                onPressed: () => Scaffold.of(context).openDrawer(),
-              ),
-            ),
-            title: Text(
-              'Nutrition Journal',
-              style: GoogleFonts.outfit(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildFloatingAddButton() {
     return Positioned(
-      bottom: 110,
+      bottom: 20,
       right: 20,
       child: Container(
         decoration: BoxDecoration(
