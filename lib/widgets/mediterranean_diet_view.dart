@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fitness_app/app_theme.dart';
 import '../models/curve_painter.dart';
+import 'package:provider/provider.dart';
+import '../providers/meal_provider.dart';
 
 class MediterraneanDietView extends StatelessWidget {
   final AnimationController animationController;
@@ -27,6 +29,8 @@ class MediterraneanDietView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mealProvider = context.watch<MealProvider>();
+    
     return AnimatedBuilder(
       animation: animationController,
       builder: (context, child) {
@@ -68,14 +72,14 @@ class MediterraneanDietView extends StatelessWidget {
                                   _buildStatRow(
                                     'images/eaten.png',
                                     'Eaten',
-                                    eatenCalories ?? 1127,
+                                    eatenCalories ?? 0,
                                     hexToColor('#87A0E5'),
                                   ),
                                   const SizedBox(height: 8),
                                   _buildStatRow(
                                     'images/burned.png',
                                     'Burned',
-                                    burnedCalories ?? 102,
+                                    burnedCalories ?? 0,
                                     hexToColor('#F56E98'),
                                   ),
                                 ],
@@ -106,7 +110,7 @@ class MediterraneanDietView extends StatelessWidget {
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         Text(
-                                          '${targetCalories - (eatenCalories ?? 0) + (burnedCalories ?? 0)}',
+                                          '${(targetCalories - (eatenCalories ?? 0) + (burnedCalories ?? 0)).clamp(0, targetCalories)}',
                                           style: GoogleFonts.outfit(
                                             fontSize: 24,
                                             fontWeight: FontWeight.bold,
@@ -161,9 +165,9 @@ class MediterraneanDietView extends StatelessWidget {
                       padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
                       child: Row(
                         children: [
-                          _buildMacro('Carbs', '12g left', hexToColor('#87A0E5'), animation.value),
-                          _buildMacro('Protein', '30g left', hexToColor('#F56E98'), animation.value),
-                          _buildMacro('Fat', '10g left', hexToColor('#F1B440'), animation.value),
+                          _buildMacro('Carbs', '${mealProvider.totalCarbs.toInt()}g', hexToColor('#87A0E5'), animation.value),
+                          _buildMacro('Protein', '${mealProvider.totalProtein.toInt()}g', hexToColor('#F56E98'), animation.value),
+                          _buildMacro('Fat', '${mealProvider.totalFat.toInt()}g', hexToColor('#F1B440'), animation.value),
                         ],
                       ),
                     ),
@@ -250,7 +254,7 @@ class MediterraneanDietView extends StatelessWidget {
     );
   }
 
-  Widget _buildMacro(String label, String remaining, Color color, double progress) {
+  Widget _buildMacro(String label, String value, Color color, double progress) {
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,7 +295,7 @@ class MediterraneanDietView extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Text(
-              remaining,
+              value,
               style: GoogleFonts.roboto(
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
