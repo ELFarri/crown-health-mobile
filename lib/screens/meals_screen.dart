@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../app_theme.dart';
@@ -115,11 +115,22 @@ class _MealsScreenState extends State<MealsScreen> with TickerProviderStateMixin
           ],
         ),
         child: FloatingActionButton.extended(
-          onPressed: () {
-            Navigator.push(
+          onPressed: () async {
+            final result = await Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const FoodSearchScreen(mealName: 'Journal')),
             );
+            if (result != null && result is Map<String, dynamic>) {
+              final mealProvider = Provider.of<MealProvider>(context, listen: false);
+              mealProvider.addMeal(FoodItem(
+                name: result['name'],
+                calories: (result['kcal'] as num).toInt(),
+                protein: (result['protein'] as num).toDouble(),
+                carbs: (result['carbs'] as num).toDouble(),
+                fat: (result['fat'] as num).toDouble(),
+                category: 'Journal',
+              ));
+            }
           },
           label: Text('Quick Add', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.white)),
           icon: Icon(Icons.add, color: Colors.white),

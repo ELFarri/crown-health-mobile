@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../app_theme.dart';
 import '../screens/nutrition/food_search_screen.dart';
@@ -144,11 +144,22 @@ class _MealsListViewState extends State<MealsListView> {
               ),
               child: IconButton(
                 icon: Icon(Icons.add, color: mainColor, size: 20),
-                onPressed: () {
-                  Navigator.push(
+                onPressed: () async {
+                  final result = await Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => FoodSearchScreen(mealName: category['title'])),
                   );
+                  if (result != null && result is Map<String, dynamic>) {
+                    final mealProvider = Provider.of<MealProvider>(context, listen: false);
+                    mealProvider.addMeal(FoodItem(
+                      name: result['name'],
+                      calories: (result['kcal'] as num).toInt(),
+                      protein: (result['protein'] as num).toDouble(),
+                      carbs: (result['carbs'] as num).toDouble(),
+                      fat: (result['fat'] as num).toDouble(),
+                      category: category['title'],
+                    ));
+                  }
                 },
               ),
             ),
