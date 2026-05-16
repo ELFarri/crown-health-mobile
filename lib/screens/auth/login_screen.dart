@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../app_theme.dart';
@@ -31,7 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
             width: double.infinity,
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('images/unnamed.png'), // Using available asset
+                image: AssetImage('images/fitness_bg.png'), // Using available asset
                 fit: BoxFit.cover,
                 alignment: Alignment.topCenter,
               ),
