@@ -22,7 +22,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
   void initState() {
     super.initState();
     _messages.add(ChatMessage(
-      text: "Welcome to your royal consultation. How can I assist you in your journey to peak performance today?",
+      text: "Welcome to your Calal consultation. How can I assist you in your journey to peak performance today?",
       isUser: false,
     ));
   }
@@ -93,7 +93,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
             ),
             SizedBox(width: 12),
             Text(
-              'Crown Coach AI',
+              'Calal Coach AI',
               style: GoogleFonts.outfit(
                 color: isDark ? Colors.white : AppTheme.darkText,
                 fontWeight: FontWeight.bold,
