@@ -1,9 +1,9 @@
-﻿import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 import '../providers/user_provider.dart';
 import '../providers/meal_provider.dart';
 
 class AIService {
-  static const String _apiKey = 'AIzaSyBlaRgwaA7r_mfDbXaWlrx8VqdGvIHRAYg';
+  static const String _apiKey = 'AIzaSyAEJGCixxpRJRmlndMge6lTh2eRgKnFca4';
   
   static Future<String> getCoachResponse({
     required String message, 
