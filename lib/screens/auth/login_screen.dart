@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'dart:ui';
@@ -157,15 +157,31 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildLogo() {
-    return Container(
-      height: 90,
-      width: 90,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
+    return Hero(
+      tag: 'logo',
+      child: Container(
+        height: 100,
+        width: 100,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Color(0xFF4F46E5).withOpacity(0.4),
+              blurRadius: 20,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipOval(
+          child: Image.asset(
+            'images/app_logo.jpg',
+            width: 100,
+            height: 100,
+            fit: BoxFit.contain,
+          ),
+        ),
       ),
-      child: Icon(Icons.fitness_center_rounded, color: Colors.white, size: 45),
     );
   }
 

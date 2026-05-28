@@ -93,10 +93,10 @@ class _SplashScreenState extends State<SplashScreen>
                 Hero(
                   tag: 'logo',
                   child: Container(
-                    height: 120,
-                    width: 120,
+                    height: 130,
+                    width: 130,
                     decoration: BoxDecoration(
-                      gradient: AppTheme.primaryGradient,
+                      color: Colors.white,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
@@ -104,12 +104,20 @@ class _SplashScreenState extends State<SplashScreen>
                           offset: Offset(0, 12),
                           blurRadius: 24,
                         ),
+                        BoxShadow(
+                          color: Colors.white.withOpacity(0.15),
+                          offset: Offset(0, -4),
+                          blurRadius: 12,
+                        ),
                       ],
                     ),
-                    child: Icon(
-                      Icons.fitness_center,
-                      color: Colors.white,
-                      size: 70,
+                    child: ClipOval(
+                      child: Image.asset(
+                        'images/app_logo.jpg',
+                        width: 130,
+                        height: 130,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
                 ),
@@ -118,7 +126,7 @@ class _SplashScreenState extends State<SplashScreen>
                 
                 // App Name
                 Text(
-                  'Fitness Pro',
+                  'Calal Coach',
                   style: TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.bold,
@@ -131,11 +139,11 @@ class _SplashScreenState extends State<SplashScreen>
                 
                 // Tagline
                 Text(
-                  'Track your fitness journey',
+                  'Your AI-powered fitness companion',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     color: Colors.white.withOpacity(0.9),
-                    letterSpacing: 1,
+                    letterSpacing: 0.5,
                   ),
                 ),
                 

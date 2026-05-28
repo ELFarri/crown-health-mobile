@@ -1,4 +1,4 @@
-﻿import 'dart:math' as math;
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:fitness_app/app_theme.dart';
 import '../models/tabIcon_data.dart';
@@ -228,16 +228,23 @@ class _TabIconsState extends State<TabIcons> with TickerProviderStateMixin {
                     curve: const Interval(0.1, 1.0, curve: Curves.fastOutSlowIn),
                   ),
                 ),
-                child: Image.asset(
-                  widget.tabIconData.isSelected
-                      ? widget.tabIconData.selectedImage
-                      : widget.tabIconData.image,
-                  errorBuilder: (context, error, stackTrace) => Icon(
-                    Icons.home_outlined,
-                    size: 24,
-                    color: widget.tabIconData.isSelected 
-                        ? AppTheme.nearlyDarkBlue 
-                        : AppTheme.gray,
+                child: SizedBox(
+                  width: 26,
+                  height: 26,
+                  child: Image.asset(
+                    widget.tabIconData.isSelected
+                        ? widget.tabIconData.selectedImage
+                        : widget.tabIconData.image,
+                    width: 26,
+                    height: 26,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => Icon(
+                      Icons.home_outlined,
+                      size: 24,
+                      color: widget.tabIconData.isSelected
+                          ? AppTheme.nearlyDarkBlue
+                          : AppTheme.gray,
+                    ),
                   ),
                 ),
               ),
