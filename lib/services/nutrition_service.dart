@@ -5,6 +5,20 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 class NutritionService {
   static const String _baseUrl = 'https://world.openfoodfacts.org/api/v2';
 
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is num) return value.toInt();
+    if (value is String) return double.tryParse(value)?.toInt() ?? 0;
+    return 0;
+  }
+
   static Future<Map<String, dynamic>?> searchByBarcode(String barcode) async {
     try {
       final String targetUrl = '$_baseUrl/product/$barcode.json';
@@ -29,12 +43,13 @@ class NutritionService {
         final data = jsonDecode(response.body);
         if (data['status'] == 1) {
           final product = data['product'];
+          final nutriments = product['nutriments'] ?? {};
           return {
             'name': product['product_name'] ?? 'Unknown Product',
-            'kcal': (product['nutriments']['energy-kcal_100g'] ?? 0).toInt(),
-            'protein': (product['nutriments']['proteins_100g'] ?? 0).toDouble(),
-            'carbs': (product['nutriments']['carbohydrates_100g'] ?? 0).toDouble(),
-            'fat': (product['nutriments']['fat_100g'] ?? 0).toDouble(),
+            'kcal': _parseInt(nutriments['energy-kcal_100g']),
+            'protein': _parseDouble(nutriments['proteins_100g']),
+            'carbs': _parseDouble(nutriments['carbohydrates_100g']),
+            'fat': _parseDouble(nutriments['fat_100g']),
             'brand': product['brands'] ?? '',
           };
         }
@@ -72,12 +87,15 @@ class NutritionService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final List products = data['products'] ?? [];
-        return products.map((p) => {
-          'name': p['product_name'] ?? 'Unknown',
-          'kcal': (p['nutriments']['energy-kcal_100g'] ?? 0).toInt(),
-          'protein': (p['nutriments']['proteins_100g'] ?? 0).toDouble(),
-          'carbs': (p['nutriments']['carbohydrates_100g'] ?? 0).toDouble(),
-          'fat': (p['nutriments']['fat_100g'] ?? 0).toDouble(),
+        return products.map((p) {
+          final nutriments = p['nutriments'] ?? {};
+          return {
+            'name': p['product_name'] ?? 'Unknown',
+            'kcal': _parseInt(nutriments['energy-kcal_100g']),
+            'protein': _parseDouble(nutriments['proteins_100g']),
+            'carbs': _parseDouble(nutriments['carbohydrates_100g']),
+            'fat': _parseDouble(nutriments['fat_100g']),
+          };
         }).toList();
       }
     } catch (e) {
