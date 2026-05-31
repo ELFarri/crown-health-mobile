@@ -112,13 +112,16 @@ class _SplashScreenState extends State<SplashScreen>
                       ],
                     ),
                     child: ClipOval(
-                      child: Transform.scale(
-                        scale: 2.8,
-                        child: Image.asset(
-                          'images/app_logo.jpg',
-                          width: 130,
-                          height: 130,
-                          fit: BoxFit.cover,
+                      child: Transform.translate(
+                        offset: const Offset(12, 12),
+                        child: Transform.scale(
+                          scale: 2.8,
+                          child: Image.asset(
+                            'images/app_logo.jpg',
+                            width: 130,
+                            height: 130,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                     ),

@@ -174,13 +174,16 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
         child: ClipOval(
-          child: Transform.scale(
-            scale: 2.8,
-            child: Image.asset(
-              'images/app_logo.jpg',
-              width: 100,
-              height: 100,
-              fit: BoxFit.cover,
+          child: Transform.translate(
+            offset: const Offset(9, 9),
+            child: Transform.scale(
+              scale: 2.8,
+              child: Image.asset(
+                'images/app_logo.jpg',
+                width: 100,
+                height: 100,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
         ),
