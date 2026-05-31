@@ -1,12 +1,15 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class NutritionService {
   static const String _baseUrl = 'https://world.openfoodfacts.org/api/v2';
 
   static Future<Map<String, dynamic>?> searchByBarcode(String barcode) async {
     try {
-      final response = await http.get(Uri.parse('$_baseUrl/product/$barcode.json'));
+      final String targetUrl = '$_baseUrl/product/$barcode.json';
+      final String url = kIsWeb ? 'https://corsproxy.io/?${Uri.encodeComponent(targetUrl)}' : targetUrl;
+      final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == 1) {
@@ -29,9 +32,9 @@ class NutritionService {
 
   static Future<List<Map<String, dynamic>>> searchByName(String query) async {
     try {
-      final response = await http.get(
-        Uri.parse('https://en.openfoodfacts.org/cgi/search.pl?search_terms=$query&search_simple=1&action=process&json=1&page_size=20&lc=en')
-      );
+      final String targetUrl = 'https://en.openfoodfacts.org/cgi/search.pl?search_terms=$query&search_simple=1&action=process&json=1&page_size=20&lc=en';
+      final String url = kIsWeb ? 'https://corsproxy.io/?${Uri.encodeComponent(targetUrl)}' : targetUrl;
+      final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final List products = data['products'] ?? [];
