@@ -30,7 +30,7 @@ class NutritionService {
   static Future<List<Map<String, dynamic>>> searchByName(String query) async {
     try {
       final response = await http.get(
-        Uri.parse('https://world.openfoodfacts.org/cgi/search.pl?search_terms=$query&search_simple=1&action=process&json=1&page_size=20')
+        Uri.parse('https://en.openfoodfacts.org/cgi/search.pl?search_terms=$query&search_simple=1&action=process&json=1&page_size=20&lc=en')
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

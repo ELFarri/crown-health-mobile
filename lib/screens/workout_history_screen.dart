@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../app_theme.dart';
+import 'workout_detail_screen.dart';
 
 class WorkoutHistoryScreen extends StatelessWidget {
   final List<Map<String, dynamic>> _history = [
@@ -92,7 +93,12 @@ class WorkoutHistoryScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Center(
             child: TextButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => WorkoutDetailScreen(workout: workout)),
+                );
+              },
               child: Text('View Details', style: GoogleFonts.outfit(color: AppTheme.nearlyDarkBlue, fontWeight: FontWeight.bold)),
             ),
           ),
