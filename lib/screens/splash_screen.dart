@@ -113,7 +113,7 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                     child: ClipOval(
                       child: Transform.translate(
-                        offset: const Offset(12, 12),
+                        offset: const Offset(-22, 22),
                         child: Transform.scale(
                           scale: 2.8,
                           child: Image.asset(
