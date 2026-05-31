@@ -1,4 +1,4 @@
-import 'package:fitness_app/app_theme.dart';
+﻿import 'package:fitness_app/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -37,19 +37,23 @@ class BodyMeasurementView extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 18),
               child: Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.white,
+                                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF6F56E8), Color(0xFF79DCE8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(8),
-                    bottomRight: Radius.circular(8),
-                    topLeft: Radius.circular(8),
+                    bottomLeft: Radius.circular(24),
+                    bottomRight: Radius.circular(24),
+                    topLeft: Radius.circular(24),
                     topRight: Radius.circular(68),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.gray.withOpacity(0.2),
-                      offset: const Offset(1.1, 1.1),
-                      blurRadius: 10,
+                      color: Color(0xFF6F56E8).withOpacity(0.4),
+                      offset: const Offset(0, 10),
+                      blurRadius: 20,
                     ),
                   ],
                 ),
@@ -68,7 +72,7 @@ class BodyMeasurementView extends StatelessWidget {
                               style: GoogleFonts.outfit(
                                 fontWeight: FontWeight.w500,
                                 fontSize: 16,
-                                color: AppTheme.darkText,
+                                color: Colors.white,
                               ),
                             ),
                           ),
@@ -86,7 +90,7 @@ class BodyMeasurementView extends StatelessWidget {
                                       style: GoogleFonts.outfit(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 32,
-                                        color: AppTheme.nearlyDarkBlue,
+                                        color: Colors.white,
                                       ),
                                     ),
                                   ),
@@ -97,7 +101,7 @@ class BodyMeasurementView extends StatelessWidget {
                                       style: GoogleFonts.outfit(
                                         fontWeight: FontWeight.w500,
                                         fontSize: 18,
-                                        color: AppTheme.nearlyDarkBlue,
+                                        color: Colors.white,
                                       ),
                                     ),
                                   ),
@@ -110,7 +114,7 @@ class BodyMeasurementView extends StatelessWidget {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(Icons.access_time, 
-                                          color: AppTheme.gray.withOpacity(0.5), 
+                                          color: Colors.white.withOpacity(0.7), 
                                           size: 16),
                                       const SizedBox(width: 4),
                                       Text(
@@ -118,7 +122,7 @@ class BodyMeasurementView extends StatelessWidget {
                                         style: GoogleFonts.outfit(
                                           fontWeight: FontWeight.w500,
                                           fontSize: 14,
-                                          color: AppTheme.gray.withOpacity(0.5),
+                                          color: Colors.white.withOpacity(0.7),
                                         ),
                                       ),
                                     ],
@@ -130,7 +134,7 @@ class BodyMeasurementView extends StatelessWidget {
                                       style: TextStyle(
                                         fontWeight: FontWeight.w500,
                                         fontSize: 12,
-                                        color: AppTheme.nearlyDarkBlue,
+                                        color: Colors.white,
                                       ),
                                     ),
                                   ),
@@ -147,7 +151,7 @@ class BodyMeasurementView extends StatelessWidget {
                       margin: const EdgeInsets.fromLTRB(24, 8, 24, 8),
                       height: 2,
                       decoration: BoxDecoration(
-                        color: AppTheme.background,
+                        color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
@@ -167,7 +171,7 @@ class BodyMeasurementView extends StatelessWidget {
                                   style: GoogleFonts.outfit(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 16,
-                                    color: AppTheme.darkText,
+                                    color: Colors.white,
                                   ),
                                 ),
                                 Padding(
@@ -177,7 +181,7 @@ class BodyMeasurementView extends StatelessWidget {
                                     style: GoogleFonts.outfit(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 12,
-                                      color: Color(0xFF8B8B8B),
+                                      color: Colors.white.withOpacity(0.7),
                                     ),
                                   ),
                                 ),
@@ -194,7 +198,7 @@ class BodyMeasurementView extends StatelessWidget {
                                   style: GoogleFonts.outfit(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 16,
-                                    color: AppTheme.darkText,
+                                    color: Colors.white,
                                   ),
                                 ),
                                 Padding(
@@ -204,7 +208,7 @@ class BodyMeasurementView extends StatelessWidget {
                                     style: GoogleFonts.outfit(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 12,
-                                      color: Color(0xFF8B8B8B),
+                                      color: Colors.white.withOpacity(0.7),
                                     ),
                                   ),
                                 ),
@@ -222,7 +226,7 @@ class BodyMeasurementView extends StatelessWidget {
                                   style: GoogleFonts.outfit(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 16,
-                                    color: AppTheme.darkText,
+                                    color: Colors.white,
                                   ),
                                 ),
                                 Padding(
@@ -232,7 +236,7 @@ class BodyMeasurementView extends StatelessWidget {
                                     style: GoogleFonts.outfit(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 12,
-                                      color: Color(0xFF8B8B8B),
+                                      color: Colors.white.withOpacity(0.7),
                                     ),
                                   ),
                                 ),
@@ -252,3 +256,4 @@ class BodyMeasurementView extends StatelessWidget {
     );
   }
 }
+

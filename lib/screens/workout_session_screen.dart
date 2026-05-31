@@ -141,8 +141,8 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                   builder: (context) => ExerciseBrowserScreen(currentWorkout: _exercises),
                 ),
               );
-              if (result != null && result is List<Exercise>) {
-                setState(() => _exercises = result);
+              if (result != null && result is List) {
+                setState(() => _exercises = List<Exercise>.from(result));
               }
             },
           ),

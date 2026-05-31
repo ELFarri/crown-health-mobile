@@ -285,13 +285,17 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
-    
+
     final success = await AuthService.login(
       _emailController.text.trim(),
-      _passwordController.text
+      _passwordController.text,
     );
 
     if (success) {
+      // Sync user profile from backend before navigating
+      if (mounted) {
+        await context.read<UserProvider>().fetchProfile();
+      }
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => HomeScreen()),

@@ -114,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+      builder: (sheetContext) => Container(
         padding: const EdgeInsets.all(24),
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -139,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               subtitle: 'Browse exercises and build your session',
               color: AppTheme.nearlyDarkBlue,
               onTap: () async {
-                Navigator.pop(context);
+                Navigator.pop(sheetContext);
                 final selectedExercises = await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => ExerciseBrowserScreen(currentWorkout: [])),
@@ -160,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               subtitle: 'Add food to your nutrition diary',
               color: Colors.green,
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(sheetContext);
                 setState(() => currentIndex = 2);
               },
             ),
@@ -247,34 +247,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             animationController: _animationController,
             animation: _mainScreenAnimation,
           ),
-          // Water & Diet Cards
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(child: WaterView(animationController: _animationController, animation: _mainScreenAnimation)),
-                SizedBox(width: 12),
-                Expanded(child: MediterraneanDietView(
-                  animationController: _animationController, 
-                  animation: _mainScreenAnimation,
-                  targetCalories: userProvider.targetCalories,
-                  eatenCalories: mealProvider.totalCalories,
-                )),
-              ],
-            ),
+          // Water & Diet Cards (stacked for mobile responsiveness)
+          WaterView(animationController: _animationController, animation: _mainScreenAnimation),
+          MediterraneanDietView(
+            animationController: _animationController, 
+            animation: _mainScreenAnimation,
+            targetCalories: userProvider.targetCalories,
+            eatenCalories: mealProvider.totalCalories,
           ),
           
-          // Workout & Glass
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(child: WorkoutView(animationController: _animationController, animation: _mainScreenAnimation)),
-                SizedBox(width: 12),
-                Expanded(child: GlassView(animationController: _animationController, animation: _mainScreenAnimation)),
-              ],
-            ),
-          ),
+          // Workout & Glass (stacked for mobile responsiveness)
+          WorkoutView(animationController: _animationController, animation: _mainScreenAnimation, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => WorkoutSessionScreen(exercises: [])))),
+          GlassView(animationController: _animationController, animation: _mainScreenAnimation),
           
           SizedBox(height: 24),
         ],
@@ -282,3 +266,4 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 }
+

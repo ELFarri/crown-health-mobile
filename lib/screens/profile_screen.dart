@@ -52,40 +52,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final user = Provider.of<UserProvider>(context);
     
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(24, AppBar().preferredSize.height + MediaQuery.of(context).padding.top + 24, 24, 100),
-            child: Column(
+    return Container(
+      color: AppTheme.background,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 100),
+        child: Column(
+          children: [
+            _buildProfileCard(user),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _isEditing ? _saveProfile : () => setState(() => _isEditing = true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.nearlyDarkBlue,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: Text(_isEditing ? 'Save Profile' : 'Edit Profile', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 30),
+            Row(
               children: [
-                _buildProfileCard(user),
-                const SizedBox(height: 30),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _isEditing 
-                        ? _buildEditField('Weight (kg)', _weightController, Icons.fitness_center)
-                        : _buildStatCard('Weight', '${user.weight}kg', Icons.fitness_center),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _isEditing
-                        ? _buildEditField('Height (cm)', _heightController, Icons.height)
-                        : _buildStatCard('Height', '${user.height}cm', Icons.height),
-                    ),
-                  ],
+                Expanded(
+                  child: _isEditing 
+                    ? _buildEditField('Weight (kg)', _weightController, Icons.fitness_center)
+                    : _buildStatCard('Weight', '${user.weight}kg', Icons.fitness_center),
                 ),
-                const SizedBox(height: 16),
-                _buildStatCard('Daily Goal', '${user.targetCalories} kcal', Icons.bolt),
-                const SizedBox(height: 40),
-                _buildLogoutButton(),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _isEditing
+                    ? _buildEditField('Height (cm)', _heightController, Icons.height)
+                    : _buildStatCard('Height', '${user.height}cm', Icons.height),
+                ),
               ],
             ),
-          ),
-          _getAppBarUI(),
-        ],
+            const SizedBox(height: 16),
+            _buildStatCard('Daily Goal', '${user.targetCalories} kcal', Icons.bolt),
+            const SizedBox(height: 40),
+            _buildLogoutButton(),
+          ],
+        ),
       ),
     );
   }
@@ -115,7 +121,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.darkText),
             ),
             Text(
-              user.email,
+              user.email.isNotEmpty ? user.email : 'Loading...',
               style: GoogleFonts.outfit(fontSize: 16, color: Colors.grey),
             ),
           ],
@@ -220,30 +226,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _getAppBarUI() {
-    return Container(
-      height: AppBar().preferredSize.height + MediaQuery.of(context).padding.top,
-      decoration: BoxDecoration(
-        gradient: AppTheme.primaryGradient,
-        boxShadow: [BoxShadow(color: AppTheme.gray.withOpacity(0.2), offset: const Offset(0, 2), blurRadius: 8)],
-      ),
-      child: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
-        title: Text('Profile', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22)),
-        actions: [
-          TextButton(
-            onPressed: _isEditing ? _saveProfile : () => setState(() => _isEditing = true),
-            child: Text(_isEditing ? 'SAVE' : 'EDIT', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-  }
+
 }
+

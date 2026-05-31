@@ -9,6 +9,7 @@ class Constants {
   // URLs complètes
   static const String loginUrl = "$baseUrl$authPrefix/login/";
   static const String registerUrl = "$baseUrl$authPrefix/register/";
+  static const String profileUrl = "$baseUrl$authPrefix/profile/";
   static const String foodsUrl = "$baseUrl$nutritionPrefix/foods/";
   static const String workoutsUrl = "$baseUrl$workoutPrefix/";
   static const String mealsUrl = "$baseUrl$nutritionPrefix/meals/";

@@ -23,7 +23,7 @@ class _ExerciseBrowserScreenState extends State<ExerciseBrowserScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedExercises = List.from(widget.currentWorkout);
+    _selectedExercises = List<Exercise>.from(widget.currentWorkout);
   }
 
   List<String> get _muscles => ['All', ...ExerciseService.exerciseData.keys.toList()];

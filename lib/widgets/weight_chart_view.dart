@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -34,7 +34,41 @@ class WeightChartView extends StatelessWidget {
             SizedBox(height: 24),
             Expanded(
               child: history.length < 2 
-                ? Center(child: Text("Add more weight entries to see progress", style: GoogleFonts.outfit(color: Colors.grey)))
+                ? Stack(
+                    children: [
+                      LineChart(
+                        LineChartData(
+                          gridData: FlGridData(show: false),
+                          titlesData: FlTitlesData(show: false),
+                          borderData: FlBorderData(show: false),
+                          lineBarsData: [
+                            LineChartBarData(
+                              spots: [FlSpot(0, 3), FlSpot(1, 4), FlSpot(2, 3.5), FlSpot(3, 5), FlSpot(4, 4.5)],
+                              isCurved: true,
+                              color: AppTheme.nearlyDarkBlue.withOpacity(0.2),
+                              barWidth: 4,
+                              dashArray: [10, 5],
+                              dotData: FlDotData(show: false),
+                              belowBarData: BarAreaData(
+                                show: true,
+                                color: AppTheme.nearlyDarkBlue.withOpacity(0.05),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Center(
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text("Add more weight entries to see progress", style: GoogleFonts.outfit(color: AppTheme.nearlyDarkBlue, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
+                  )
                 : LineChart(
                     LineChartData(
                       gridData: FlGridData(show: false),
@@ -63,3 +97,4 @@ class WeightChartView extends StatelessWidget {
     );
   }
 }
+
