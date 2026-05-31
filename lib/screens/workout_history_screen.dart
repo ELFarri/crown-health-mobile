@@ -49,13 +49,13 @@ class WorkoutHistoryScreen extends StatelessWidget {
         itemCount: _history.length,
         itemBuilder: (context, index) {
           final workout = _history[index];
-          return _buildHistoryCard(workout);
+          return _buildHistoryCard(context, workout);
         },
       ),
     );
   }
 
-  Widget _buildHistoryCard(Map<String, dynamic> workout) {
+  Widget _buildHistoryCard(BuildContext context, Map<String, dynamic> workout) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.all(20),
