@@ -8,8 +8,23 @@ class NutritionService {
   static Future<Map<String, dynamic>?> searchByBarcode(String barcode) async {
     try {
       final String targetUrl = '$_baseUrl/product/$barcode.json';
-      final String url = kIsWeb ? 'https://corsproxy.io/?${Uri.encodeComponent(targetUrl)}' : targetUrl;
-      final response = await http.get(Uri.parse(url));
+      http.Response response;
+      if (kIsWeb) {
+        final String proxyUrl1 = 'https://api.codetabs.com/v1/proxy/?quest=${Uri.encodeComponent(targetUrl)}';
+        print('--- Web Barcode Search via Proxy 1: $proxyUrl1 ---');
+        response = await http.get(Uri.parse(proxyUrl1));
+        print('Proxy 1 response code: ${response.statusCode}');
+        
+        if (response.statusCode != 200) {
+          final String proxyUrl2 = 'https://api.allorigins.win/raw?url=${Uri.encodeComponent(targetUrl)}';
+          print('--- Barcode Proxy 1 failed, trying fallback Proxy 2: $proxyUrl2 ---');
+          response = await http.get(Uri.parse(proxyUrl2));
+          print('Proxy 2 response code: ${response.statusCode}');
+        }
+      } else {
+        response = await http.get(Uri.parse(targetUrl));
+      }
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == 1) {
@@ -31,10 +46,29 @@ class NutritionService {
   }
 
   static Future<List<Map<String, dynamic>>> searchByName(String query) async {
+    print('--- Nutrition Search Triggered: query="$query", kIsWeb=$kIsWeb ---');
     try {
-      final String targetUrl = 'https://en.openfoodfacts.org/cgi/search.pl?search_terms=$query&search_simple=1&action=process&json=1&page_size=20&lc=en';
-      final String url = kIsWeb ? 'https://corsproxy.io/?${Uri.encodeComponent(targetUrl)}' : targetUrl;
-      final response = await http.get(Uri.parse(url));
+      final String targetUrl = 'https://world.openfoodfacts.org/cgi/search.pl?search_terms=$query&search_simple=1&action=process&json=1&page_size=20&lc=en';
+      
+      http.Response response;
+      if (kIsWeb) {
+        final String proxyUrl1 = 'https://api.codetabs.com/v1/proxy/?quest=${Uri.encodeComponent(targetUrl)}';
+        print('Fetching via Proxy 1 (codetabs): $proxyUrl1');
+        response = await http.get(Uri.parse(proxyUrl1));
+        print('Proxy 1 response code: ${response.statusCode}');
+        
+        if (response.statusCode != 200) {
+          final String proxyUrl2 = 'https://api.allorigins.win/raw?url=${Uri.encodeComponent(targetUrl)}';
+          print('Proxy 1 failed, trying fallback Proxy 2 (allorigins): $proxyUrl2');
+          response = await http.get(Uri.parse(proxyUrl2));
+          print('Proxy 2 response code: ${response.statusCode}');
+        }
+      } else {
+        print('Fetching directly: $targetUrl');
+        response = await http.get(Uri.parse(targetUrl));
+      }
+
+      print('Response body length: ${response.body.length}');
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final List products = data['products'] ?? [];
