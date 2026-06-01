@@ -1,4 +1,4 @@
-name: Build Calal Coach APK
+name: Build Calal Coach Apps
 
 on:
   push:
@@ -7,7 +7,8 @@ on:
     branches: [ main, master ]
 
 jobs:
-  build:
+  build-android:
+    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -38,4 +39,38 @@ jobs:
         with:
           name: calal-coach-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
+
+  build-ios:
+    name: Build iOS Unsigned IPA
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.3'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build iOS App (Unsigned)
+        run: flutter build ipa --no-codesign
+
+      - name: Package Unsigned IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r calal-coach-unsigned.ipa Payload
+
+      - name: Upload Unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: calal-coach-unsigned-ipa
+          path: calal-coach-unsigned.ipa
           retention-days: 30
