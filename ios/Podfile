@@ -1,18 +1,24 @@
 platform :ios, '15.5'
 
 flutter_ios_podfile_setup = File.join(File.dirname(__FILE__), 'Flutter', 'podhelper.rb')
-require flutter_ios_podfile_setup
+if File.exist?(flutter_ios_podfile_setup)
+  require flutter_ios_podfile_setup
+end
 
 target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
-  flutter_install_all_ios_pods File.dirname(__FILE__)
+  if File.exist?(flutter_ios_podfile_setup)
+    flutter_install_all_ios_pods File.dirname(__FILE__)
+  end
 end
 
 post_install do |installer|
   installer.pods_project.targets.each do |target|
-    flutter_additional_ios_build_settings(target)
+    if File.exist?(flutter_ios_podfile_setup)
+      flutter_additional_ios_build_settings(target)
+    end
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.5'
     end
