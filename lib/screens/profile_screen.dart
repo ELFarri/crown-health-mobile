@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../app_theme.dart';
 import '../providers/user_provider.dart';
+import '../models/nutrition_stat.dart';
+import '../services/api_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -88,11 +90,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 16),
             _buildStatCard('Daily Goal', '${user.targetCalories} kcal', Icons.bolt),
+            const SizedBox(height: 30),
+            _buildNutritionStatsSection(),
             const SizedBox(height: 40),
             _buildLogoutButton(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildNutritionStatsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Nutrition Statistics (Last 7 Days)',
+          style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.darkText),
+        ),
+        const SizedBox(height: 16),
+        FutureBuilder<List<NutritionStat>>(
+          future: ApiService.getNutritionStats(period: 'weekly'),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+              return Text('No nutrition data available yet.', style: GoogleFonts.outfit(color: Colors.grey));
+            }
+
+            final stats = snapshot.data!;
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: stats.length,
+              itemBuilder: (context, index) {
+                final stat = stats[index];
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(stat.date, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppTheme.darkText)),
+                      Text('${stat.totalCalories} kcal', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppTheme.nearlyDarkBlue)),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ],
     );
   }
 

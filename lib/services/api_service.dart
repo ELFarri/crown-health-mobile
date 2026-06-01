@@ -5,6 +5,8 @@ import '../models/meal_model.dart';
 import '../models/workout_model.dart';
 import '../models/user_workout_model.dart';
 import '../models/food_model.dart';
+import '../models/nutrition_stat.dart';
+import '../services/auth_service.dart';
 
 class ApiService {
   static const String baseUrl = Constants.baseUrl;
@@ -21,6 +23,26 @@ class ApiService {
       }
     } catch (e) {
       print('Meals Error: $e');
+    }
+    return [];
+  }
+
+  static Future<List<NutritionStat>> getNutritionStats({String period = 'weekly'}) async {
+    try {
+      final token = await AuthService.getToken();
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/nutrition/stats/?period=$period'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      if (response.statusCode == 200) {
+        List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => NutritionStat.fromJson(json)).toList();
+      }
+    } catch (e) {
+      print('Nutrition Stats Error: $e');
     }
     return [];
   }
