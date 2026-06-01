@@ -79,12 +79,12 @@ class WorkoutHistoryScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Row(
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
             children: [
               _buildStatInfo(Icons.timer_outlined, workout['duration']),
-              const SizedBox(width: 24),
               _buildStatInfo(Icons.fitness_center_outlined, workout['volume']),
-              const SizedBox(width: 24),
               _buildStatInfo(Icons.list_alt_rounded, '${workout['exercises']} exercises'),
             ],
           ),
