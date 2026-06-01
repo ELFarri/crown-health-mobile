@@ -61,13 +61,24 @@ jobs:
           flutter pub get
           flutter build ios --config-only --no-codesign
 
-      - name: Build iOS App (Unsigned)
-        run: flutter build ios --release --no-codesign --xcarguments "CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="
+      - name: Build iOS App (Unsigned via xcodebuild)
+        run: |
+          xcodebuild build \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=- \
+            DEVELOPMENT_TEAM= \
+            SYMROOT=$(pwd)/build/ios
 
       - name: Package Unsigned IPA
         run: |
           mkdir -p Payload
-          cp -r build/ios/iphoneos/Runner.app Payload/
+          cp -r build/ios/Release-iphoneos/Runner.app Payload/
           zip -r calal-coach-unsigned.ipa Payload
 
       - name: Upload Unsigned IPA
