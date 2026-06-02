@@ -3,8 +3,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../app_theme.dart';
 import '../providers/user_provider.dart';
+import '../providers/meal_provider.dart';
+import '../providers/weight_provider.dart';
+import '../providers/progress_provider.dart';
 import '../models/nutrition_stat.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -260,7 +264,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildLogoutButton() {
     return ElevatedButton(
-      onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false),
+      onPressed: () async {
+        await AuthService.logout();
+        if (mounted) {
+          context.read<UserProvider>().reset();
+          context.read<MealProvider>().reset();
+          context.read<WeightProvider>().reset();
+          context.read<ProgressProvider>().reset();
+          Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+        }
+      },
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.red.withOpacity(0.1),
         foregroundColor: Colors.red,

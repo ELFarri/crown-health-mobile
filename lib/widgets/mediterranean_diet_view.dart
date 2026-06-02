@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fitness_app/app_theme.dart';
 import '../models/curve_painter.dart';
@@ -30,6 +30,8 @@ class MediterraneanDietView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mealProvider = context.watch<MealProvider>();
+    final double caloriesProgress = targetCalories > 0 ? (eatenCalories ?? 0) / targetCalories : 0.0;
+    final double clampedProgress = caloriesProgress.clamp(0.0, 1.0);
     
     return AnimatedBuilder(
       animation: animationController,
@@ -138,7 +140,7 @@ class MediterraneanDietView extends StatelessWidget {
                                         hexToColor("#8A98E8"),
                                         hexToColor("#8A98E8"),
                                       ],
-                                      angle: 140 + (360 - 140) * (1.0 - animation.value),
+                                      angle: 5 + 360 * (clampedProgress * animation.value),
                                     ),
                                     child: const SizedBox(width: 108, height: 108),
                                   ),

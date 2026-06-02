@@ -5,6 +5,7 @@ import '../../app_theme.dart';
 import '../../models/exercise_model.dart';
 import '../../services/exercise_service.dart';
 import '../add_exercise_screen.dart';
+import '../../services/api_service.dart';
 
 class ExerciseListScreen extends StatefulWidget {
   final String muscleName;
@@ -57,17 +58,42 @@ class _ExerciseListScreenState extends State<ExerciseListScreen> {
     _exercises = ExerciseService.exerciseData[widget.muscleName] ?? [];
   }
 
+  Future<void> _saveAndPop() async {
+    final completedSets = _exercises.fold(0, (sum, e) => sum + e.sets.where((s) => s.isCompleted).length);
+    if (completedSets > 0) {
+      final workoutName = '${widget.muscleName} Focus Workout';
+      final category = widget.muscleName;
+      final duration = (completedSets * 3).clamp(5, 60);
+      
+      try {
+        await ApiService.logWorkout(
+          workoutName: workoutName,
+          category: category,
+          durationMinutes: duration,
+        );
+      } catch (e) {
+        print('Failed to save focus workout: $e');
+      }
+    }
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: AppTheme.darkText),
-          onPressed: () => Navigator.pop(context),
-        ),
+    return WillPopScope(
+      onWillPop: () async {
+        await _saveAndPop();
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.background,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios, color: AppTheme.darkText),
+            onPressed: _saveAndPop,
+          ),
         title: Text(
           '${widget.muscleName} Exercises',
           style: GoogleFonts.outfit(
@@ -128,7 +154,7 @@ class _ExerciseListScreenState extends State<ExerciseListScreen> {
           if (_showTimer) _buildTimerOverlay(),
         ],
       ),
-    );
+    ),);
   }
 
   Widget _buildTimerOverlay() {
@@ -169,6 +195,51 @@ class _ExerciseListScreenState extends State<ExerciseListScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showDeleteExerciseConfirmation(Exercise exercise) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          "Supprimer l'exercice ?",
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          "Êtes-vous sûr de vouloir supprimer l'exercice '${exercise.name}' ?",
+          style: GoogleFonts.outfit(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              "Annuler",
+              style: GoogleFonts.outfit(color: AppTheme.grey),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _exercises.remove(exercise);
+              });
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("Exercice supprimé"),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              );
+            },
+            child: Text(
+              "Supprimer",
+              style: GoogleFonts.outfit(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -231,7 +302,30 @@ class _ExerciseListScreenState extends State<ExerciseListScreen> {
                     ],
                   ),
                 ),
-                Icon(Icons.more_vert, color: AppTheme.grey.withOpacity(0.5)),
+                PopupMenuButton<String>(
+                  icon: Icon(Icons.more_vert, color: AppTheme.grey.withOpacity(0.5)),
+                  padding: EdgeInsets.zero,
+                  onSelected: (value) {
+                    if (value == 'delete') {
+                      _showDeleteExerciseConfirmation(exercise);
+                    }
+                  },
+                  itemBuilder: (BuildContext context) => [
+                    PopupMenuItem<String>(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            "Supprimer l'exercice",
+                            style: GoogleFonts.outfit(color: Colors.red, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -245,7 +339,7 @@ class _ExerciseListScreenState extends State<ExerciseListScreen> {
                     Expanded(child: _buildHeaderLabel('SET')),
                     Expanded(child: _buildHeaderLabel('KG')),
                     Expanded(child: _buildHeaderLabel('REPS')),
-                    SizedBox(width: 40),
+                    SizedBox(width: exercise.sets.length > 1 ? 64 : 40),
                   ],
                 ),
                 Divider(color: AppTheme.background),
@@ -281,6 +375,17 @@ class _ExerciseListScreenState extends State<ExerciseListScreen> {
                             });
                           },
                         ),
+                        if (exercise.sets.length > 1)
+                          IconButton(
+                            icon: Icon(Icons.delete_outline, color: Colors.red.withOpacity(0.8), size: 20),
+                            padding: EdgeInsets.zero,
+                            constraints: BoxConstraints(),
+                            onPressed: () {
+                              setState(() {
+                                exercise.sets.removeAt(idx);
+                              });
+                            },
+                          ),
                       ],
                     ),
                   );
@@ -350,7 +455,7 @@ class _ExerciseListScreenState extends State<ExerciseListScreen> {
     return Container(
       padding: EdgeInsets.fromLTRB(20, 0, 20, 30),
       child: ElevatedButton(
-        onPressed: () => Navigator.pop(context),
+        onPressed: _saveAndPop,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.nearlyDarkBlue,
           foregroundColor: Colors.white,

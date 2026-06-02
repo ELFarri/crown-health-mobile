@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fitness_app/services/api_service.dart';
 
 class FoodItem {
   final String name;
@@ -11,36 +12,37 @@ class FoodItem {
   final String category;
 
   FoodItem({
-    required this.name, 
-    required this.calories, 
-    required this.protein, 
-    required this.carbs, 
+    required this.name,
+    required this.calories,
+    required this.protein,
+    required this.carbs,
     required this.fat,
-    this.category = 'General'
+    this.category = 'General',
   });
 
   Map<String, dynamic> toMap() => {
-    'name': name,
-    'calories': calories,
-    'protein': protein,
-    'carbs': carbs,
-    'fat': fat,
-    'category': category,
-  };
+        'name': name,
+        'calories': calories,
+        'protein': protein,
+        'carbs': carbs,
+        'fat': fat,
+        'category': category,
+      };
 
   factory FoodItem.fromMap(Map<String, dynamic> map) => FoodItem(
-    name: map['name'],
-    calories: map['calories'],
-    protein: map['protein'].toDouble(),
-    carbs: map['carbs'].toDouble(),
-    fat: map['fat'].toDouble(),
-    category: map['category'] ?? 'General',
-  );
+        name: map['name'],
+        calories: map['calories'],
+        protein: (map['protein'] as num).toDouble(),
+        carbs: (map['carbs'] as num).toDouble(),
+        fat: (map['fat'] as num).toDouble(),
+        category: map['category'] ?? 'General',
+      );
 }
 
 class MealProvider extends ChangeNotifier {
   List<FoodItem> _todayMeals = [];
   List<FoodItem> get todayMeals => _todayMeals;
+  String _userEmail = '';
 
   final List<FoodItem> foodLibrary = [
     FoodItem(name: 'Chicken Breast (100g)', calories: 165, protein: 31, carbs: 0, fat: 3.6, category: 'Protein'),
@@ -54,23 +56,62 @@ class MealProvider extends ChangeNotifier {
   ];
 
   MealProvider() {
-    _loadMeals();
+    _loadUserEmail();
   }
 
-  void addMeal(FoodItem item) {
+  Future<void> _loadUserEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    _userEmail = prefs.getString('user_email') ?? '';
+    await _loadMeals();
+  }
+
+  /// Returns a user+date specific storage key to isolate data per account
+  String get _storageKey {
+    final today = DateTime.now();
+    final dateStr =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    return 'today_meals_${_userEmail.isNotEmpty ? _userEmail : "local"}_$dateStr';
+  }
+
+  /// Call this after login to initialise provider with user-specific data
+  Future<void> initForUser(String email) async {
+    _userEmail = email;
+    _todayMeals = [];
+    await _loadMeals();
+  }
+
+  void addMeal(FoodItem item) async {
     _todayMeals.add(item);
     _saveMeals();
     notifyListeners();
+    try {
+      await ApiService.addMeal(item);
+    } catch (e) {
+      print('Failed to sync meal to backend: $e');
+    }
   }
 
   int get totalCalories => _todayMeals.fold(0, (sum, item) => sum + item.calories);
-  double get totalProtein => _todayMeals.fold(0, (sum, item) => sum + item.protein);
-  double get totalCarbs => _todayMeals.fold(0, (sum, item) => sum + item.carbs);
-  double get totalFat => _todayMeals.fold(0, (sum, item) => sum + item.fat);
+  double get totalProtein => _todayMeals.fold(0.0, (sum, item) => sum + item.protein);
+  double get totalCarbs => _todayMeals.fold(0.0, (sum, item) => sum + item.carbs);
+  double get totalFat => _todayMeals.fold(0.0, (sum, item) => sum + item.fat);
 
   Future<void> _loadMeals() async {
+    // 1. Try backend first (always authoritative for logged-in user)
+    try {
+      final backendMeals = await ApiService.getUserMeals();
+      if (backendMeals.isNotEmpty) {
+        _todayMeals = backendMeals;
+        notifyListeners();
+        return;
+      }
+    } catch (e) {
+      print('Failed to load backend meals: $e');
+    }
+
+    // 2. Fallback to local user-specific storage
     final prefs = await SharedPreferences.getInstance();
-    final String? jsonStr = prefs.getString('today_meals_json');
+    final String? jsonStr = prefs.getString(_storageKey);
     if (jsonStr != null) {
       final List<dynamic> decoded = jsonDecode(jsonStr);
       _todayMeals = decoded.map((item) => FoodItem.fromMap(item)).toList();
@@ -81,6 +122,17 @@ class MealProvider extends ChangeNotifier {
   Future<void> _saveMeals() async {
     final prefs = await SharedPreferences.getInstance();
     final String encoded = jsonEncode(_todayMeals.map((m) => m.toMap()).toList());
-    await prefs.setString('today_meals_json', encoded);
+    await prefs.setString(_storageKey, encoded);
+  }
+
+  void reset() {
+    _todayMeals = [];
+    _userEmail = '';
+    notifyListeners();
+  }
+
+  Future<void> refreshMeals() async {
+    _todayMeals = [];
+    await _loadMeals();
   }
 }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fitness_app/app_theme.dart';
+import '../services/exercise_service.dart';
+import '../models/exercise_model.dart';
+import '../screens/workout_session_screen.dart';
 
 class WorkoutView extends StatelessWidget {
   final AnimationController animationController;
@@ -22,6 +25,49 @@ class WorkoutView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final int weekday = DateTime.now().weekday;
+    String recommendedMuscle = "Glutes";
+    String workoutTitle = "Intense Glutes Workout";
+    String duration = "50 min";
+    
+    switch (weekday) {
+      case 1:
+        recommendedMuscle = "Biceps";
+        workoutTitle = "Biceps & Arms Workout";
+        duration = "35 min";
+        break;
+      case 2:
+        recommendedMuscle = "Glutes";
+        workoutTitle = "Intense Glutes Workout";
+        duration = "50 min";
+        break;
+      case 3:
+        recommendedMuscle = "Abs";
+        workoutTitle = "Iron Abs & Core Workout";
+        duration = "25 min";
+        break;
+      case 4:
+        recommendedMuscle = "Chest";
+        workoutTitle = "Chest & Triceps Workout";
+        duration = "45 min";
+        break;
+      case 5:
+        recommendedMuscle = "Back";
+        workoutTitle = "V-Back & Strengthening";
+        duration = "40 min";
+        break;
+      case 6:
+        recommendedMuscle = "Quadriceps";
+        workoutTitle = "Quads & Thighs Workout";
+        duration = "55 min";
+        break;
+      case 7:
+        recommendedMuscle = "Glutes";
+        workoutTitle = "Glutes Sculpt & Tone";
+        duration = "50 min";
+        break;
+    }
+
     return AnimatedBuilder(
       animation: animationController,
       builder: (context, child) {
@@ -32,7 +78,27 @@ class WorkoutView extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 18),
               child: GestureDetector(
-                onTap: onTap,
+                onTap: () {
+                  final exercises = ExerciseService.exerciseData[recommendedMuscle] ?? [];
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => WorkoutSessionScreen(
+                        exercises: exercises.map((e) => Exercise(
+                          name: e.name,
+                          imagePath: e.imagePath,
+                          targetMuscle: e.targetMuscle,
+                          equipment: e.equipment,
+                          sets: e.sets.map((s) => WorkoutSet(
+                            reps: s.reps,
+                            weight: s.weight,
+                            isCompleted: false,
+                          )).toList(),
+                        )).toList(),
+                      ),
+                    ),
+                  );
+                },
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
@@ -64,7 +130,7 @@ class WorkoutView extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Next Workout',
+                          'Recommended for today',
                           style: GoogleFonts.outfit(
                             fontWeight: FontWeight.normal,
                             fontSize: 14,
@@ -72,9 +138,9 @@ class WorkoutView extends StatelessWidget {
                           ),
                         ),
                         Padding(
-                          padding: EdgeInsets.only(top: 8),
+                          padding: const EdgeInsets.only(top: 8),
                           child: Text(
-                            'Legs & Glutes workout at home',
+                            workoutTitle,
                             style: GoogleFonts.outfit(
                               fontWeight: FontWeight.w600,
                               fontSize: 20,
@@ -94,7 +160,7 @@ class WorkoutView extends StatelessWidget {
                             Padding(
                               padding: const EdgeInsets.only(left: 4),
                               child: Text(
-                                '68 min',
+                                duration,
                                 style: GoogleFonts.outfit(
                                   fontWeight: FontWeight.w500,
                                   fontSize: 14,

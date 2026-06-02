@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -6,6 +7,7 @@ class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
 
   static Future<void> init() async {
+    if (kIsWeb) return;
     const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
     const DarwinInitializationSettings initializationSettingsIOS = DarwinInitializationSettings();
     
@@ -19,6 +21,7 @@ class NotificationService {
   }
 
   static Future<void> showNotification(int id, String title, String body) async {
+    if (kIsWeb) return;
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'fitness_channel',
       'Fitness Notifications',
@@ -30,6 +33,7 @@ class NotificationService {
   }
 
   static Future<void> scheduleDailyNotification(int id, String title, String body, int hour, int minute) async {
+    if (kIsWeb) return;
     await _notificationsPlugin.zonedSchedule(
       id,
       title,

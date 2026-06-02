@@ -6,6 +6,7 @@ import '../widgets/mediterranean_diet_view.dart';
 import '../widgets/meals_list_view.dart';
 import '../widgets/title_view.dart';
 import 'nutrition/food_search_screen.dart';
+import 'nutrition/nutrition_stats_screen.dart';
 import '../providers/meal_provider.dart';
 import '../providers/user_provider.dart';
 
@@ -57,6 +58,12 @@ class _MealsScreenState extends State<MealsScreen> with TickerProviderStateMixin
                     curve: Interval((1 / 5) * 0, 1.0, curve: Curves.fastOutSlowIn),
                   ),
                 ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const NutritionStatsScreen()),
+                  );
+                },
               ),
               MediterraneanDietView(
                 animationController: _localAnimationController,
@@ -80,6 +87,23 @@ class _MealsScreenState extends State<MealsScreen> with TickerProviderStateMixin
                     curve: Interval((1 / 5) * 2, 1.0, curve: Curves.fastOutSlowIn),
                   ),
                 ),
+                onTap: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const FoodSearchScreen(mealName: 'Journal')),
+                  );
+                  if (result != null && result is Map<String, dynamic>) {
+                    final mealProvider = Provider.of<MealProvider>(context, listen: false);
+                    mealProvider.addMeal(FoodItem(
+                      name: result['name'],
+                      calories: (result['kcal'] as num).toInt(),
+                      protein: (result['protein'] as num).toDouble(),
+                      carbs: (result['carbs'] as num).toDouble(),
+                      fat: (result['fat'] as num).toDouble(),
+                      category: 'Journal',
+                    ));
+                  }
+                },
               ),
               MealsListView(
                 animationController: _localAnimationController,

@@ -19,6 +19,16 @@ class AuthService {
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
+    await prefs.remove('today_meals_json');
+    await prefs.remove('user_name');
+    await prefs.remove('user_email');
+    await prefs.remove('user_weight');
+    await prefs.remove('user_height');
+    await prefs.remove('user_age');
+    await prefs.remove('user_gender');
+    await prefs.remove('user_activity_level');
+    await prefs.remove('user_goal');
+    await prefs.remove('is_onboarded');
   }
 
   static Future<bool> isLoggedIn() async {

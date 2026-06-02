@@ -5,6 +5,9 @@ import 'dart:ui';
 import '../../app_theme.dart';
 import '../../services/auth_service.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/meal_provider.dart';
+import '../../providers/weight_provider.dart';
+import '../../providers/progress_provider.dart';
 import '../home_screen.dart';
 import 'register_screen.dart';
 
@@ -292,10 +295,19 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (success) {
-      // Sync user profile from backend before navigating
       if (mounted) {
-        await context.read<UserProvider>().fetchProfile();
+        // Fetch profile first to get user email
+        final userProvider = context.read<UserProvider>();
+        await userProvider.fetchProfile();
+        final email = userProvider.email.isNotEmpty
+            ? userProvider.email
+            : _emailController.text.trim();
+        // Initialize providers with user-specific data
+        await context.read<MealProvider>().initForUser(email);
+        await context.read<WeightProvider>().initForUser(email, userProvider.weight);
+        await context.read<ProgressProvider>().initForUser(email);
       }
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => HomeScreen()),

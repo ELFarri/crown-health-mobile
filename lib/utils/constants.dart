@@ -1,5 +1,9 @@
+import 'package:flutter/foundation.dart';
+
 class Constants {
-  static const String baseUrl = "https://mouatazfarri.pythonanywhere.com";
+  static const String baseUrl = kDebugMode
+      ? "http://127.0.0.1:8000"
+      : "https://mouatazfarri.pythonanywhere.com";
   
   // Préfixes par catégorie
   static const String authPrefix = "/api/auth";

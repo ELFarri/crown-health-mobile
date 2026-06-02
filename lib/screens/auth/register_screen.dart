@@ -1,10 +1,13 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'dart:ui';
 import '../../app_theme.dart';
 import '../../services/auth_service.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/meal_provider.dart';
+import '../../providers/weight_provider.dart';
+import '../../providers/progress_provider.dart';
 import '../home_screen.dart';
 import 'login_screen.dart';
 
@@ -332,19 +335,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _isLoading = true);
     
+    String goalStr = 'maintain';
+    if (_goal == Goal.loseWeight) {
+      goalStr = 'loss';
+    } else if (_goal == Goal.gainMuscle) {
+      goalStr = 'gain';
+    }
+
     final error = await AuthService.register(
       _nameController.text.trim(),
       _emailController.text.trim(),
       _passwordController.text,
       _weight,
       _height,
-      _goal.toString().split('.').last,
+      goalStr,
     );
 
     if (error == null) {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       userProvider.updateProfile(name: _nameController.text, weight: _weight, height: _height, age: _age, gender: _gender, activityLevel: _activity, goal: _goal);
       userProvider.updateOnboardingStatus(true);
+      final email = _emailController.text.trim();
+      // Initialize providers with the new user's email
+      await Provider.of<MealProvider>(context, listen: false).initForUser(email);
+      await Provider.of<WeightProvider>(context, listen: false).initForUser(email, _weight);
+      await Provider.of<ProgressProvider>(context, listen: false).initForUser(email);
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomeScreen()));
     } else {
       setState(() {

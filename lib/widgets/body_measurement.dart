@@ -1,4 +1,4 @@
-﻿import 'package:fitness_app/app_theme.dart';
+import 'package:fitness_app/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -22,7 +22,7 @@ class BodyMeasurementView extends StatelessWidget {
 
   String _formatWeight(double? weight) {
     if (weight == null) return 'N/A';
-    return weight > 453 ? '${(weight / 453).toStringAsFixed(1)} kg' : '${weight.toStringAsFixed(1)} lbs';
+    return weight.toStringAsFixed(1);
   }
 
   @override
@@ -37,8 +37,8 @@ class BodyMeasurementView extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 18),
               child: Container(
-                                decoration: BoxDecoration(
-                  gradient: LinearGradient(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
                     colors: [Color(0xFF6F56E8), Color(0xFF79DCE8)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -51,7 +51,7 @@ class BodyMeasurementView extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0xFF6F56E8).withOpacity(0.4),
+                      color: const Color(0xFF6F56E8).withOpacity(0.4),
                       offset: const Offset(0, 10),
                       blurRadius: 20,
                     ),
@@ -66,7 +66,7 @@ class BodyMeasurementView extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Padding(
-                            padding: EdgeInsets.fromLTRB(4, 16, 0, 8),
+                            padding: const EdgeInsets.fromLTRB(4, 16, 0, 8),
                             child: Text(
                               'Weight',
                               style: GoogleFonts.outfit(
@@ -97,7 +97,7 @@ class BodyMeasurementView extends StatelessWidget {
                                   Padding(
                                     padding: const EdgeInsets.only(left: 8, bottom: 8),
                                     child: Text(
-                                      weight != null ? (weight! > 453 ? 'kg' : 'lbs') : '',
+                                      weight != null ? 'kg' : '',
                                       style: GoogleFonts.outfit(
                                         fontWeight: FontWeight.w500,
                                         fontSize: 18,
@@ -175,7 +175,7 @@ class BodyMeasurementView extends StatelessWidget {
                                   ),
                                 ),
                                 Padding(
-                                  padding: EdgeInsets.only(top: 6),
+                                  padding: const EdgeInsets.only(top: 6),
                                   child: Text(
                                     'Height',
                                     style: GoogleFonts.outfit(
@@ -230,7 +230,7 @@ class BodyMeasurementView extends StatelessWidget {
                                   ),
                                 ),
                                 Padding(
-                                  padding: EdgeInsets.only(top: 6),
+                                  padding: const EdgeInsets.only(top: 6),
                                   child: Text(
                                     'Body Fat',
                                     style: GoogleFonts.outfit(
@@ -256,4 +256,3 @@ class BodyMeasurementView extends StatelessWidget {
     );
   }
 }
-

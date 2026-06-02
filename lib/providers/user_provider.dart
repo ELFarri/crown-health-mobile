@@ -110,6 +110,10 @@ class UserProvider extends ChangeNotifier {
         debugPrint('Profile synced: name=$_name, weight=$_weight, height=$_height');
       } else {
         debugPrint('Profile fetch failed: ${response.statusCode} ${response.body}');
+        if (response.statusCode == 401) {
+          await AuthService.logout();
+          reset();
+        }
       }
     } catch (e) {
       debugPrint('Profile fetch error: $e');
@@ -221,5 +225,20 @@ class UserProvider extends ChangeNotifier {
     await prefs.setInt('user_gender',          _gender.index);
     await prefs.setInt('user_activity_level',  _activityLevel.index);
     await prefs.setInt('user_goal',            _goal.index);
+  }
+
+  void reset() {
+    _name = 'User';
+    _email = '';
+    _weight = 75.0;
+    _height = 175.0;
+    _age = 25;
+    _gender = Gender.male;
+    _activityLevel = ActivityLevel.moderatelyActive;
+    _goal = Goal.maintain;
+    _isOnboarded = false;
+    _isDarkMode = false;
+    _isLoadingProfile = false;
+    notifyListeners();
   }
 }

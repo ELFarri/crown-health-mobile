@@ -41,7 +41,8 @@ class NutritionService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['status'] == 1) {
+        final status = data['status'];
+        if (status == 1 || status == '1' || status == 'found' || status == 'product_found') {
           final product = data['product'];
           final nutriments = product['nutriments'] ?? {};
           return {

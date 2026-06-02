@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:io' show File;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -19,11 +20,11 @@ class _ProgressGalleryScreenState extends State<ProgressGalleryScreen> {
   Future<void> _pickImage(ImageSource source) async {
     final XFile? image = await _picker.pickImage(source: source);
     if (image != null) {
-      _showWeightDialog(File(image.path));
+      _showWeightDialog(image);
     }
   }
 
-  void _showWeightDialog(File image) {
+  void _showWeightDialog(XFile image) {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final weightController = TextEditingController(text: userProvider.weight.toString());
 
@@ -166,7 +167,9 @@ class _ProgressGalleryScreenState extends State<ProgressGalleryScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
-                child: Image.file(File(photo.imagePath), fit: BoxFit.cover),
+                child: kIsWeb
+                    ? Image.network(photo.imagePath, fit: BoxFit.cover)
+                    : Image.file(File(photo.imagePath), fit: BoxFit.cover),
               ),
               Padding(
                 padding: const EdgeInsets.all(12.0),

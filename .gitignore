@@ -46,3 +46,4 @@ app.*.map.json
 
 # Gemini Agent IDE folder
 .gemini/
+.vercel

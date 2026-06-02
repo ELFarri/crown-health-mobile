@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../app_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
 
 class WaterView extends StatefulWidget {
   final AnimationController animationController;
@@ -15,12 +19,46 @@ class WaterView extends StatefulWidget {
 class _WaterViewState extends State<WaterView> {
   int _glasses = 0;
   final int _goal = 8;
+  late String _dateKey;
+  String? _lastEmail;
 
-  void _addGlass() {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final userProvider = Provider.of<UserProvider>(context);
+    if (_lastEmail != userProvider.email) {
+      _lastEmail = userProvider.email;
+      _loadGlasses();
+    }
+  }
+
+  Future<void> _loadGlasses() async {
+    final email = _lastEmail ?? '';
+    _dateKey = 'water_glasses_${email}_${DateFormat('yyyy-MM-dd').format(DateTime.now())}';
+
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _glasses = prefs.getInt(_dateKey) ?? 0;
+      });
+    }
+  }
+
+  Future<void> _addGlass() async {
     if (_glasses < _goal) {
       setState(() {
         _glasses++;
       });
+      final email = _lastEmail ?? '';
+      _dateKey = 'water_glasses_${email}_${DateFormat('yyyy-MM-dd').format(DateTime.now())}';
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_dateKey, _glasses);
     }
   }
 

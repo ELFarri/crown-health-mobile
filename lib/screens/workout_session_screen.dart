@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../app_theme.dart';
 import '../models/exercise_model.dart';
 import 'exercise_browser_screen.dart';
+import '../services/api_service.dart';
 
 class WorkoutSessionScreen extends StatefulWidget {
   final List<Exercise> exercises;
@@ -69,8 +70,26 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   int get _totalSets =>
       _exercises.fold(0, (sum, e) => sum + e.sets.length);
 
-  void _finishWorkout() {
+  void _finishWorkout() async {
     _sessionTimer?.cancel();
+    
+    final durationMinutes = _sessionSeconds ~/ 60;
+    final int safeDuration = durationMinutes > 0 ? durationMinutes : 1;
+    final String workoutCategory = _exercises.isNotEmpty ? _exercises.first.targetMuscle : 'General';
+    final String workoutName = _exercises.isNotEmpty 
+        ? '${_exercises.first.targetMuscle} Workout' 
+        : 'Custom Session';
+        
+    try {
+      await ApiService.logWorkout(
+        workoutName: workoutName,
+        category: workoutCategory,
+        durationMinutes: safeDuration,
+      );
+    } catch (e) {
+      print('Failed to save workout: $e');
+    }
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -297,6 +316,17 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                             });
                           },
                         ),
+                        if (exercise.sets.length > 1)
+                          IconButton(
+                            icon: Icon(Icons.delete_outline, color: Colors.red.withOpacity(0.8), size: 20),
+                            padding: EdgeInsets.zero,
+                            constraints: BoxConstraints(),
+                            onPressed: () {
+                              setState(() {
+                                exercise.sets.removeAt(i);
+                              });
+                            },
+                          ),
                       ],
                     ),
                   );

@@ -45,9 +45,20 @@ class StatsScreen extends StatelessWidget {
   }
 
   Widget _buildCalorieChart(MealProvider meal, UserProvider user) {
+    final int todayIndex = DateTime.now().weekday - 1;
+    final List<double> weeklyBase = [1850, 2100, 1950, 2200, 2050, 1900, 2150];
+    final List<FlSpot> spots = [];
+    for (int i = 0; i <= todayIndex; i++) {
+      if (i == todayIndex) {
+        spots.add(FlSpot(i.toDouble(), meal.totalCalories.toDouble()));
+      } else {
+        spots.add(FlSpot(i.toDouble(), weeklyBase[i]));
+      }
+    }
+
     return Container(
       height: 250,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -56,18 +67,36 @@ class StatsScreen extends StatelessWidget {
       child: LineChart(
         LineChartData(
           gridData: FlGridData(show: false),
-          titlesData: FlTitlesData(show: false),
+          titlesData: FlTitlesData(
+            show: true,
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                interval: 1.0,
+                getTitlesWidget: (value, meta) {
+                  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                  final int idx = value.toInt();
+                  if (idx >= 0 && idx < days.length) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        days[idx],
+                        style: GoogleFonts.outfit(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                    );
+                  }
+                  return const SizedBox();
+                },
+              ),
+            ),
+            leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
           borderData: FlBorderData(show: false),
           lineBarsData: [
             LineChartBarData(
-              spots: [
-                FlSpot(0, 1800),
-                FlSpot(1, 2100),
-                FlSpot(2, 1900),
-                FlSpot(3, 2400),
-                FlSpot(4, 2200),
-                FlSpot(5, meal.totalCalories.toDouble()),
-              ],
+              spots: spots,
               isCurved: true,
               color: AppTheme.nearlyDarkBlue,
               barWidth: 4,
@@ -85,35 +114,58 @@ class StatsScreen extends StatelessWidget {
 
   Widget _buildMacroSection(MealProvider meal) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildMacroIndicator('Protein', meal.totalProtein, Colors.blue),
-        _buildMacroIndicator('Carbs', meal.totalCarbs, Colors.orange),
-        _buildMacroIndicator('Fat', meal.totalFat, Colors.red),
+        _buildMacroIndicator('Protein', meal.totalProtein, const Color(0xFFFA7D82)),
+        _buildMacroIndicator('Carbs', meal.totalCarbs, const Color(0xFF738AE6)),
+        _buildMacroIndicator('Fat', meal.totalFat, const Color(0xFFFE95B2)),
       ],
     );
   }
 
   Widget _buildMacroIndicator(String label, double value, Color color) {
-    return Column(
-      children: [
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            shape: BoxShape.circle,
+    return Container(
+      width: 95,
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-          child: Center(
-            child: Text(
-              '${value.toInt()}g',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: color, fontSize: 18),
+        ],
+        border: Border.all(color: color.withOpacity(0.15)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+            child: Icon(
+              label == 'Protein' 
+                ? Icons.fitness_center_rounded 
+                : label == 'Carbs' 
+                  ? Icons.restaurant_menu_rounded 
+                  : Icons.local_fire_department_rounded, 
+              color: color, 
+              size: 20,
             ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(label, style: GoogleFonts.outfit(color: Colors.grey)),
-      ],
+          const SizedBox(height: 12),
+          Text(
+            '${value.toInt()}g',
+            style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppTheme.darkText, fontSize: 18),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label, 
+            style: GoogleFonts.outfit(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
     );
   }
 

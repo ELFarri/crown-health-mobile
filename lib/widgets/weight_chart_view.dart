@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -33,7 +33,7 @@ class WeightChartView extends StatelessWidget {
             ),
             SizedBox(height: 24),
             Expanded(
-              child: history.length < 2 
+              child: history.isEmpty 
                 ? Stack(
                     children: [
                       LineChart(
@@ -76,7 +76,9 @@ class WeightChartView extends StatelessWidget {
                       borderData: FlBorderData(show: false),
                       lineBarsData: [
                         LineChartBarData(
-                          spots: history.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.weight)).toList(),
+                          spots: history.length == 1
+                            ? [FlSpot(0, history[0].weight), FlSpot(1, history[0].weight)]
+                            : history.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.weight)).toList(),
                           isCurved: true,
                           color: AppTheme.nearlyDarkBlue,
                           barWidth: 4,

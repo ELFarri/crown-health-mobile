@@ -14,6 +14,8 @@ import 'package:fitness_app/widgets/weight_chart_view.dart';
 import 'package:provider/provider.dart';
 import 'package:fitness_app/providers/user_provider.dart';
 import 'package:fitness_app/providers/meal_provider.dart';
+import 'package:fitness_app/providers/weight_provider.dart';
+import 'package:fitness_app/providers/progress_provider.dart';
 
 // Import target screens
 import 'package:fitness_app/screens/my_diary_screen.dart';
@@ -85,6 +87,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         userEmail: 'user@test.com',
         onLogout: () async {
           await AuthService.logout();
+          if (context.mounted) {
+            context.read<UserProvider>().reset();
+            context.read<MealProvider>().reset();
+            context.read<WeightProvider>().reset();
+            context.read<ProgressProvider>().reset();
+          }
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => LoginScreen()),

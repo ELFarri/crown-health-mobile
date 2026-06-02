@@ -1,11 +1,11 @@
 {
-    "name": "my_app",
-    "short_name": "my_app",
+    "name": "Calal",
+    "short_name": "Calal",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F2F3F8",
+    "theme_color": "#2633C5",
+    "description": "Calal: Fitness & Calorie Tracker App",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
