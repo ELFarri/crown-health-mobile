@@ -62,6 +62,19 @@ class _WaterViewState extends State<WaterView> {
     }
   }
 
+  Future<void> _removeGlass() async {
+    if (_glasses > 0) {
+      setState(() {
+        _glasses--;
+      });
+      final email = _lastEmail ?? '';
+      _dateKey = 'water_glasses_${email}_${DateFormat('yyyy-MM-dd').format(DateTime.now())}';
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_dateKey, _glasses);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -155,24 +168,53 @@ class _WaterViewState extends State<WaterView> {
                           ],
                         ),
                       ),
-                      // Add Button
-                      GestureDetector(
-                        onTap: _addGlass,
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            gradient: AppTheme.primaryGradient,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.nearlyDarkBlue.withOpacity(0.3),
-                                offset: const Offset(0, 4),
-                                blurRadius: 8,
+                      const SizedBox(width: 12),
+                      // Add / Remove Buttons Stacked Vertically
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          GestureDetector(
+                            onTap: _addGlass,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                gradient: AppTheme.primaryGradient,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.nearlyDarkBlue.withOpacity(0.3),
+                                    offset: const Offset(0, 3),
+                                    blurRadius: 6,
+                                  ),
+                                ],
                               ),
-                            ],
+                              child: const Icon(Icons.add, color: Colors.white, size: 18),
+                            ),
                           ),
-                          child: const Icon(Icons.add, color: Colors.white, size: 24),
-                        ),
+                          const SizedBox(height: 10),
+                          GestureDetector(
+                            onTap: _removeGlass,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppTheme.nearlyDarkBlue.withOpacity(0.3),
+                                  width: 1.0,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.1),
+                                    offset: const Offset(0, 2),
+                                    blurRadius: 4,
+                                  ),
+                                ],
+                              ),
+                              child: Icon(Icons.remove, color: AppTheme.nearlyDarkBlue, size: 18),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
