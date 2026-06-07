@@ -10,11 +10,18 @@ import '../providers/meal_provider.dart' show FoodItem;
 class ApiService {
   static const String baseUrl = Constants.baseUrl;
 
-  static Future<List<FoodItem>> getUserMeals() async {
+  static Future<List<FoodItem>> getUserMeals({DateTime? date}) async {
     try {
       final token = await AuthService.getToken();
+      // BUG FIX: always send today's date so backend returns only today's meals
+      final targetDate = date ?? DateTime.now();
+      final dateStr =
+          '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
+      final uri = Uri.parse(Constants.mealsUrl).replace(
+        queryParameters: {'date': dateStr},
+      );
       final response = await http.get(
-        Uri.parse(Constants.mealsUrl),
+        uri,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -87,11 +94,18 @@ class ApiService {
     }
   }
 
-  static Future<List<Map<String, dynamic>>> getUserWorkouts() async {
+  static Future<List<Map<String, dynamic>>> getUserWorkouts({DateTime? date}) async {
     try {
       final token = await AuthService.getToken();
+      // BUG FIX: support date filtering so statistics_view can query any day
+      Uri uri = Uri.parse('$baseUrl/api/workouts/history/');
+      if (date != null) {
+        final dateStr =
+            '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+        uri = uri.replace(queryParameters: {'date': dateStr});
+      }
       final response = await http.get(
-        Uri.parse('$baseUrl/api/workouts/history/'),
+        uri,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',

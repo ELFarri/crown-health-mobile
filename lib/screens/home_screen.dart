@@ -26,6 +26,7 @@ import 'package:fitness_app/screens/exercise_browser_screen.dart';
 import 'package:fitness_app/screens/workout_session_screen.dart';
 import 'package:fitness_app/models/exercise_model.dart';
 import 'package:fitness_app/services/auth_service.dart';
+import 'package:fitness_app/services/api_service.dart';
 import 'package:fitness_app/screens/auth/login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -40,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late Animation<double> _mainScreenAnimation;
 
   int currentIndex = 0;
+  int _burnedCalories = 0;
 
   @override
   void initState() {
@@ -57,6 +59,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
     _mainScreenAnimationController.forward();
     _animationController.forward();
+    _loadTodayBurnedCalories();
+  }
+
+  Future<void> _loadTodayBurnedCalories() async {
+    try {
+      // BUG FIX: pass today's date so backend returns only today's workouts
+      final workouts = await ApiService.getUserWorkouts(date: DateTime.now());
+      int total = 0;
+      for (final w in workouts) {
+        total += (w['calories_burned'] as num).toInt();
+      }
+      if (mounted) setState(() => _burnedCalories = total);
+    } catch (e) {
+      print('Failed to load burned calories: \$e');
+    }
   }
 
   @override
@@ -84,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
       drawer: CustomDrawer(
         userName: userProvider.name,
-        userEmail: 'user@test.com',
+        userEmail: userProvider.email,
         onLogout: () async {
           await AuthService.logout();
           if (context.mounted) {
@@ -262,6 +279,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             animation: _mainScreenAnimation,
             targetCalories: userProvider.targetCalories,
             eatenCalories: mealProvider.totalCalories,
+            burnedCalories: _burnedCalories,
           ),
           
           // Workout & Glass (stacked for mobile responsiveness)

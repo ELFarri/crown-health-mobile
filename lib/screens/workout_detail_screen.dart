@@ -50,7 +50,7 @@ class WorkoutDetailScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        workout['muscle'],
+                        workout['muscle'] ?? workout['workout_name'] ?? 'Workout',
                         style: GoogleFonts.outfit(
                           color: Colors.white,
                           fontSize: 28,
@@ -64,7 +64,7 @@ class WorkoutDetailScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          workout['date'],
+                          workout['date'] ?? '',
                           style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w500),
                         ),
                       ),
@@ -74,11 +74,11 @@ class WorkoutDetailScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildHeaderStat(Icons.timer_outlined, workout['duration'], 'Duration'),
+                      _buildHeaderStat(Icons.timer_outlined, workout['duration'] ?? 'N/A', 'Duration'),
                       Container(width: 1, height: 40, color: Colors.white.withOpacity(0.3)),
-                      _buildHeaderStat(Icons.fitness_center_outlined, workout['volume'], 'Volume'),
+                      _buildHeaderStat(Icons.local_fire_department_rounded, '${workout['calories_burned'] ?? 0} kcal', 'Calories'),
                       Container(width: 1, height: 40, color: Colors.white.withOpacity(0.3)),
-                      _buildHeaderStat(Icons.list_alt_rounded, '${workout['exercises']}', 'Exercises'),
+                      _buildHeaderStat(Icons.category_rounded, workout['muscle'] ?? 'General', 'Category'),
                     ],
                   ),
                 ],
@@ -87,7 +87,7 @@ class WorkoutDetailScreen extends StatelessWidget {
             const SizedBox(height: 30),
             
             Text(
-              'Exercises Performed',
+              'Session Summary',
               style: GoogleFonts.outfit(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -96,26 +96,14 @@ class WorkoutDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             
-            // Dummy list of exercises to show what was done
-            _buildExerciseRow('Bench Press', '4 sets x 10 reps', '80 kg'),
-            _buildExerciseRow('Incline Dumbbell Press', '3 sets x 12 reps', '30 kg'),
-            _buildExerciseRow('Cable Crossovers', '3 sets x 15 reps', '25 kg'),
-            _buildExerciseRow('Push-ups', '3 sets x max reps', 'Bodyweight'),
+            // Real data from the workout map
+            _buildExerciseRow(
+              workout['workout_name'] ?? 'Workout Session',
+              workout['duration'] ?? 'N/A',
+              workout['muscle'] ?? 'General',
+            ),
             
             const SizedBox(height: 30),
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.share),
-                label: Text('Share Workout', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.nearlyDarkBlue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -133,7 +121,7 @@ class WorkoutDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildExerciseRow(String name, String setsReps, String weight) {
+  Widget _buildExerciseRow(String name, String duration, String category) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -165,11 +153,11 @@ class WorkoutDetailScreen extends StatelessWidget {
               children: [
                 Text(name, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.darkText)),
                 const SizedBox(height: 4),
-                Text(setsReps, style: GoogleFonts.outfit(color: Colors.grey, fontSize: 14)),
+                Text('Duration: $duration', style: GoogleFonts.outfit(color: Colors.grey, fontSize: 14)),
               ],
             ),
           ),
-          Text(weight, style: GoogleFonts.outfit(fontWeight: FontWeight.w900, color: AppTheme.nearlyDarkBlue, fontSize: 16)),
+          Text(category, style: GoogleFonts.outfit(fontWeight: FontWeight.w900, color: AppTheme.nearlyDarkBlue, fontSize: 14)),
         ],
       ),
     );

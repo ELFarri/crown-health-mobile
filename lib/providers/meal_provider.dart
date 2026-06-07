@@ -43,6 +43,7 @@ class MealProvider extends ChangeNotifier {
   List<FoodItem> _todayMeals = [];
   List<FoodItem> get todayMeals => _todayMeals;
   String _userEmail = '';
+  bool _isBackendAvailable = true;
 
   final List<FoodItem> foodLibrary = [
     FoodItem(name: 'Chicken Breast (100g)', calories: 165, protein: 31, carbs: 0, fat: 3.6, category: 'Protein'),
@@ -65,7 +66,7 @@ class MealProvider extends ChangeNotifier {
     await _loadMeals();
   }
 
-  /// Returns a user+date specific storage key to isolate data per account
+  /// Returns a user+date specific storage key to isolate data per account and day
   String get _storageKey {
     final today = DateTime.now();
     final dateStr =
@@ -80,14 +81,25 @@ class MealProvider extends ChangeNotifier {
     await _loadMeals();
   }
 
+  /// Ajoute un repas localement et tente de le synchroniser avec le backend.
   void addMeal(FoodItem item) async {
+    // 1. Ajouter immédiatement pour une UI réactive
     _todayMeals.add(item);
     _saveMeals();
     notifyListeners();
+
+    // 2. Tenter de sync backend
     try {
-      await ApiService.addMeal(item);
+      final success = await ApiService.addMeal(item);
+      if (!success) {
+        debugPrint('[MealProvider] Backend sync échoué pour "${item.name}" — gardé en cache local.');
+        _isBackendAvailable = false;
+      } else {
+        _isBackendAvailable = true;
+      }
     } catch (e) {
-      print('Failed to sync meal to backend: $e');
+      _isBackendAvailable = false;
+      debugPrint('[MealProvider] Erreur sync backend: $e');
     }
   }
 
@@ -96,26 +108,38 @@ class MealProvider extends ChangeNotifier {
   double get totalCarbs => _todayMeals.fold(0.0, (sum, item) => sum + item.carbs);
   double get totalFat => _todayMeals.fold(0.0, (sum, item) => sum + item.fat);
 
+  /// Indique si le dernier appel backend a réussi
+  bool get isBackendAvailable => _isBackendAvailable;
+
   Future<void> _loadMeals() async {
-    // 1. Try backend first (always authoritative for logged-in user)
+    // 1. Charger immédiatement le cache local si disponible pour un affichage instantané
     try {
-      final backendMeals = await ApiService.getUserMeals();
-      if (backendMeals.isNotEmpty) {
-        _todayMeals = backendMeals;
+      final prefs = await SharedPreferences.getInstance();
+      final String? jsonStr = prefs.getString(_storageKey);
+      if (jsonStr != null) {
+        final List<dynamic> decoded = jsonDecode(jsonStr);
+        _todayMeals = decoded.map((item) => FoodItem.fromMap(item)).toList();
         notifyListeners();
-        return;
       }
     } catch (e) {
-      print('Failed to load backend meals: $e');
+      debugPrint('[MealProvider] Erreur lors du chargement du cache local : $e');
     }
 
-    // 2. Fallback to local user-specific storage
-    final prefs = await SharedPreferences.getInstance();
-    final String? jsonStr = prefs.getString(_storageKey);
-    if (jsonStr != null) {
-      final List<dynamic> decoded = jsonDecode(jsonStr);
-      _todayMeals = decoded.map((item) => FoodItem.fromMap(item)).toList();
+    // 2. Charger les données du backend en arrière-plan pour synchroniser
+    _fetchMealsFromBackend();
+  }
+
+  Future<void> _fetchMealsFromBackend() async {
+    try {
+      final backendMeals = await ApiService.getUserMeals();
+      // Le backend est disponible, sa réponse fait foi
+      _todayMeals = backendMeals;
+      _isBackendAvailable = true;
       notifyListeners();
+      _saveMeals(); // Mettre à jour le cache local avec les données fraîches
+    } catch (e) {
+      _isBackendAvailable = false;
+      debugPrint('[MealProvider] Backend inaccessible lors de la sync en arrière-plan: $e');
     }
   }
 
@@ -128,6 +152,7 @@ class MealProvider extends ChangeNotifier {
   void reset() {
     _todayMeals = [];
     _userEmail = '';
+    _isBackendAvailable = true;
     notifyListeners();
   }
 

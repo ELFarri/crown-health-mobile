@@ -39,31 +39,30 @@ class StatisticsView extends StatelessWidget {
     }
     title = "$englishDay - Daily Details";
 
-    // Calculate target date formatted as YYYY-MM-DD
+    // Calculate exact target date and pass it directly to the API
     final now = DateTime.now();
     final currentWeekday = now.weekday;
     final difference = targetWeekday - currentWeekday;
     final targetDate = now.add(Duration(days: difference));
-    final String targetDateStr = "${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}";
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => FutureBuilder<List<Map<String, dynamic>>>(
-        future: ApiService.getUserWorkouts(),
+      builder: (ctx) => FutureBuilder<List<dynamic>>(
+        // BUG FIX: pass targetDate directly to API — no more client-side date filtering
+        future: Future.wait([
+          ApiService.getUserWorkouts(date: targetDate),
+          ApiService.getUserMeals(date: targetDate),
+        ]),
         builder: (context, snapshot) {
           final isLoadingWorkouts = snapshot.connectionState == ConnectionState.waiting;
-          final List<Map<String, dynamic>> workoutsList = snapshot.data ?? [];
+          final List<Map<String, dynamic>> workoutsList =
+              snapshot.data != null ? List<Map<String, dynamic>>.from(snapshot.data![0] as List) : [];
+          final apiMeals = snapshot.data != null ? snapshot.data![1] as List : [];
 
-          // Find if there is a workout matching this target date string
-          Map<String, dynamic>? matchingWorkout;
-          for (var workout in workoutsList) {
-            if (workout['date'] == targetDateStr) {
-              matchingWorkout = workout;
-              break;
-            }
-          }
+          // The backend now returns only workouts for targetDate, so take the first one
+          Map<String, dynamic>? matchingWorkout = workoutsList.isNotEmpty ? workoutsList.first : null;
 
           String steps = "0";
           String distance = "0.0 km";
@@ -85,7 +84,8 @@ class StatisticsView extends StatelessWidget {
           double fat = 0.0;
           List<Map<String, String>> meals = [];
 
-          if (targetWeekday == todayWeekday) {
+          if (targetWeekday == todayWeekday && !isLoadingWorkouts && apiMeals.isEmpty) {
+            // Use local provider for today if API returns nothing yet
             foodCalories = "${mealProvider.totalCalories} kcal";
             protein = mealProvider.totalProtein;
             carbs = mealProvider.totalCarbs;
@@ -95,6 +95,21 @@ class StatisticsView extends StatelessWidget {
               "cal": "${item.calories} kcal",
               "type": item.category,
             }).toList();
+          } else if (!isLoadingWorkouts) {
+            // use API data for any day (including today when synced)
+            for (var m in apiMeals) {
+              final meal = m as FoodItem;
+              protein += meal.protein;
+              carbs += meal.carbs;
+              fat += meal.fat;
+              meals.add({
+                "name": meal.name,
+                "cal": "${meal.calories} kcal",
+                "type": meal.category.isNotEmpty ? meal.category : 'General',
+              });
+            }
+            final totalCal = apiMeals.cast<FoodItem>().fold<int>(0, (s, m) => s + m.calories);
+            foodCalories = "$totalCal kcal";
           }
 
           final totalMacros = protein + carbs + fat;
@@ -273,9 +288,9 @@ class StatisticsView extends StatelessWidget {
                                     if (hasMeals) ...[
                                       Row(
                                         children: [
-                                          Expanded(flex: (protP * 100).toInt(), child: Container(height: 6, decoration: const BoxDecoration(color: Color(0xFFFA7D82), borderRadius: BorderRadius.horizontal(left: Radius.circular(3))))),
-                                          Expanded(flex: (carbP * 100).toInt(), child: Container(height: 6, color: const Color(0xFF738AE6))),
-                                          Expanded(flex: (fatP * 100).toInt(), child: Container(height: 6, decoration: const BoxDecoration(color: Color(0xFFFE95B2), borderRadius: BorderRadius.horizontal(right: Radius.circular(3))))),
+                                          Expanded(flex: (protP * 100).toInt().clamp(1, 100), child: Container(height: 6, decoration: const BoxDecoration(color: Color(0xFFFA7D82), borderRadius: BorderRadius.horizontal(left: Radius.circular(3))))),
+                                          Expanded(flex: (carbP * 100).toInt().clamp(1, 100), child: Container(height: 6, color: const Color(0xFF738AE6))),
+                                          Expanded(flex: (fatP * 100).toInt().clamp(1, 100), child: Container(height: 6, decoration: const BoxDecoration(color: Color(0xFFFE95B2), borderRadius: BorderRadius.horizontal(right: Radius.circular(3))))),
                                         ],
                                       ),
                                       const SizedBox(height: 12),
