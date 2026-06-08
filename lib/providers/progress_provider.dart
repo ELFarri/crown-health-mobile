@@ -1,42 +1,53 @@
-import 'dart:io';
+// =================================================================================================================
+// FILE: lib/providers/progress_provider.dart
+// PURPOSE: GLOBAL PROGRESS MANAGER — manages the user's progress photos (before/after).
+//          Stores local file paths of photos taken by the user along with their weight and date.
+//          Data is persisted locally in SharedPreferences.
+//
+// FEATURES:
+//   - Add a new progress photo entry with weight and date.
+//   - Load history of progress photos.
+//   - Clear history.
+//   - Storage is user-isolated using the user's email.
+// =================================================================================================================
+
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:image_picker/image_picker.dart' show XFile;
 
-class ProgressPhoto {
-  final String id;
-  final String imagePath;
+// ─────────────────────────────────────────────────────────────────────────────
+// ProgressEntry — Data class for a single progress photo measurement
+// ─────────────────────────────────────────────────────────────────────────────
+class ProgressEntry {
   final DateTime date;
-  final double? weight;
+  final double weight;
+  final String imagePath; // Local path to the image file on the device
 
-  ProgressPhoto({
-    required this.id,
-    required this.imagePath,
+  ProgressEntry({
     required this.date,
-    this.weight,
+    required this.weight,
+    required this.imagePath,
   });
 
   Map<String, dynamic> toMap() => {
-    'id': id,
-    'imagePath': imagePath,
     'date': date.toIso8601String(),
     'weight': weight,
+    'imagePath': imagePath,
   };
 
-  factory ProgressPhoto.fromMap(Map<String, dynamic> map) => ProgressPhoto(
-    id: map['id'],
-    imagePath: map['imagePath'],
+  factory ProgressEntry.fromMap(Map<String, dynamic> map) => ProgressEntry(
     date: DateTime.parse(map['date']),
-    weight: map['weight']?.toDouble(),
+    weight: (map['weight'] as num).toDouble(),
+    imagePath: map['imagePath'],
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ProgressProvider — ChangeNotifier
+// ─────────────────────────────────────────────────────────────────────────────
 class ProgressProvider extends ChangeNotifier {
-  List<ProgressPhoto> _photos = [];
-  List<ProgressPhoto> get photos => _photos;
+  List<ProgressEntry> _entries = [];
+  List<ProgressEntry> get entries => _entries;
   String _userEmail = '';
 
   ProgressProvider() {
@@ -46,79 +57,59 @@ class ProgressProvider extends ChangeNotifier {
   Future<void> _loadUserEmail() async {
     final prefs = await SharedPreferences.getInstance();
     _userEmail = prefs.getString('user_email') ?? '';
-    await _loadPhotos();
+    await _loadEntries();
   }
 
   Future<void> initForUser(String email) async {
     _userEmail = email;
-    _photos = [];
-    await _loadPhotos();
+    _entries = [];
+    await _loadEntries();
+  }
+
+  // Unique storage key per user
+  String get _storageKey => 'progress_entries_${_userEmail.isNotEmpty ? _userEmail : "local"}';
+
+  Future<void> addEntry(String imagePath, double weight) async {
+    final newEntry = ProgressEntry(
+      date: DateTime.now(),
+      weight: weight,
+      imagePath: imagePath,
+    );
+    
+    // Insert at the beginning so the newest is first
+    _entries.insert(0, newEntry);
+    
+    await _saveEntries();
+    notifyListeners();
+  }
+  
+  Future<void> deleteEntry(int index) async {
+    if (index >= 0 && index < _entries.length) {
+      _entries.removeAt(index);
+      await _saveEntries();
+      notifyListeners();
+    }
+  }
+
+  Future<void> _loadEntries() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? jsonStr = prefs.getString(_storageKey);
+    if (jsonStr != null) {
+      final List<dynamic> decoded = jsonDecode(jsonStr);
+      _entries = decoded.map((item) => ProgressEntry.fromMap(item)).toList();
+      notifyListeners();
+    }
+  }
+
+  Future<void> _saveEntries() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String encoded = jsonEncode(_entries.map((e) => e.toMap()).toList());
+    await prefs.setString(_storageKey, encoded);
   }
 
   void reset() {
-    _photos = [];
+    _entries = [];
     _userEmail = '';
     notifyListeners();
   }
-
-  String get _storageKey => 'progress_photos_json_${_userEmail.isNotEmpty ? _userEmail : "local"}';
-
-  Future<void> addPhoto(XFile image, double? weight) async {
-    String savedPath;
-    if (kIsWeb) {
-      final bytes = await image.readAsBytes();
-      final extension = path.extension(image.path).replaceAll('.', '');
-      final mimeType = extension.isEmpty ? 'png' : extension;
-      savedPath = 'data:image/$mimeType;base64,${base64Encode(bytes)}';
-    } else {
-      final appDir = await getApplicationDocumentsDirectory();
-      final fileName = 'progress_${DateTime.now().millisecondsSinceEpoch}${path.extension(image.path)}';
-      final savedImage = await File(image.path).copy('${appDir.path}/$fileName');
-      savedPath = savedImage.path;
-    }
-
-    final newPhoto = ProgressPhoto(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      imagePath: savedPath,
-      date: DateTime.now(),
-      weight: weight,
-    );
-
-    _photos.insert(0, newPhoto);
-    await _savePhotos();
-    notifyListeners();
-  }
-
-  Future<void> deletePhoto(String id) async {
-    final photoIndex = _photos.indexWhere((p) => p.id == id);
-    if (photoIndex != -1) {
-      if (!kIsWeb) {
-        final photo = _photos[photoIndex];
-        final file = File(photo.imagePath);
-        if (await file.exists()) {
-          await file.delete();
-        }
-      }
-      _photos.removeAt(photoIndex);
-      await _savePhotos();
-      notifyListeners();
-    }
-  }
-
-  Future<void> _loadPhotos() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? photosJson = prefs.getString(_storageKey);
-    if (photosJson != null) {
-      final List<dynamic> decoded = jsonDecode(photosJson);
-      _photos = decoded.map((item) => ProgressPhoto.fromMap(item)).toList();
-      notifyListeners();
-    }
-  }
-
-  Future<void> _savePhotos() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String encoded = jsonEncode(_photos.map((p) => p.toMap()).toList());
-    await prefs.setString(_storageKey, encoded);
-  }
 }
-

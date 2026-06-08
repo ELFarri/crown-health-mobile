@@ -1,15 +1,42 @@
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fitness_app/services/api_service.dart';
+// =================================================================================================================
+// FILE: lib/providers/meal_provider.dart
+// PURPOSE: GLOBAL MEAL STATE MANAGER — manages today's logged meals with a dual-layer strategy:
+//          local cache for instant UI + backend sync for data accuracy.
+//
+// ARCHITECTURE — Optimistic UI Pattern:
+//   1. On app start: load local cache immediately → UI renders without waiting for network
+//   2. In background: fetch from Django backend → replace local data with authoritative server data
+//   3. On add meal: add to local list immediately (feels instant) → sync to backend in background
+//   If backend is unavailable, local data is used as fallback (offline-friendly)
+//
+// CONTAINS TWO CLASSES:
+//   1. FoodItem        → Pure data class (no state) representing a single food/meal entry
+//   2. MealProvider    → ChangeNotifier managing the list of today's meals + totals
+//
+// DATA STORAGE KEY STRATEGY:
+//   Each user+date combination gets a unique SharedPreferences key:
+//   'today_meals_sarah@email.com_2024-06-07'
+//   This prevents meal data from leaking between users or between days.
+// =================================================================================================================
 
+import 'dart:convert';                                       // jsonEncode/jsonDecode for local cache serialization
+import 'package:flutter/foundation.dart';                   // ChangeNotifier + debugPrint
+import 'package:shared_preferences/shared_preferences.dart'; // Local key-value storage for meal cache
+import 'package:fitness_app/services/api_service.dart';     // API calls to Django backend
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FoodItem — Data Transfer Object (DTO)
+// Represents a single food/meal entry (either from the library or logged by the user).
+// Immutable: all fields are final. To "update" an item, create a new FoodItem instance.
+// ─────────────────────────────────────────────────────────────────────────────
 class FoodItem {
-  final String name;
-  final int calories;
-  final double protein;
-  final double carbs;
-  final double fat;
-  final String category;
+  final String name;      // Food name (e.g. "Grilled Chicken", "Banana")
+  final int calories;     // Total calories in kcal (whole number)
+  final double protein;   // Protein content in grams
+  final double carbs;     // Carbohydrate content in grams
+  final double fat;       // Fat content in grams
+  final String category;  // Meal type or food group (e.g. "Protein", "Carbs", "Breakfast")
 
   FoodItem({
     required this.name,
@@ -17,34 +44,44 @@ class FoodItem {
     required this.protein,
     required this.carbs,
     required this.fat,
-    this.category = 'General',
+    this.category = 'General',  // Default category if not specified
   });
 
+  // toMap(): converts FoodItem to a plain Dart Map for JSON serialization (local cache storage)
   Map<String, dynamic> toMap() => {
-        'name': name,
-        'calories': calories,
-        'protein': protein,
-        'carbs': carbs,
-        'fat': fat,
-        'category': category,
-      };
+    'name': name,
+    'calories': calories,
+    'protein': protein,
+    'carbs': carbs,
+    'fat': fat,
+    'category': category,
+  };
 
+  // FoodItem.fromMap(): factory constructor to rebuild a FoodItem from a stored JSON map
+  // Used when loading meals from SharedPreferences (local cache) or from backend API response
   factory FoodItem.fromMap(Map<String, dynamic> map) => FoodItem(
-        name: map['name'],
-        calories: map['calories'],
-        protein: (map['protein'] as num).toDouble(),
-        carbs: (map['carbs'] as num).toDouble(),
-        fat: (map['fat'] as num).toDouble(),
-        category: map['category'] ?? 'General',
-      );
+    name: map['name'],
+    calories: map['calories'],
+    protein: (map['protein'] as num).toDouble(),  // Cast to num first (could be int or double)
+    carbs: (map['carbs'] as num).toDouble(),
+    fat: (map['fat'] as num).toDouble(),
+    category: map['category'] ?? 'General',
+  );
 }
 
-class MealProvider extends ChangeNotifier {
-  List<FoodItem> _todayMeals = [];
-  List<FoodItem> get todayMeals => _todayMeals;
-  String _userEmail = '';
-  bool _isBackendAvailable = true;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MealProvider — ChangeNotifier
+// Manages the list of today's meals and exposes computed nutritional totals.
+// ─────────────────────────────────────────────────────────────────────────────
+class MealProvider extends ChangeNotifier {
+  List<FoodItem> _todayMeals = [];        // In-memory list of today's logged meals
+  List<FoodItem> get todayMeals => _todayMeals; // Public read-only getter
+  String _userEmail = '';                 // Tracks which user's meals are loaded (for storage key isolation)
+  bool _isBackendAvailable = true;        // Tracks backend connectivity status
+
+  // Built-in food library: pre-defined common foods with accurate nutritional data.
+  // Used in the quick-add meal dialog so users don't have to type from scratch.
   final List<FoodItem> foodLibrary = [
     FoodItem(name: 'Chicken Breast (100g)', calories: 165, protein: 31, carbs: 0, fat: 3.6, category: 'Protein'),
     FoodItem(name: 'Rice (100g cooked)', calories: 130, protein: 2.7, carbs: 28, fat: 0.3, category: 'Carbs'),
@@ -56,99 +93,105 @@ class MealProvider extends ChangeNotifier {
     FoodItem(name: 'Greek Yogurt (100g)', calories: 59, protein: 10, carbs: 3.6, fat: 0.4, category: 'Protein'),
   ];
 
+  // Constructor: immediately loads the user's email then triggers meal loading
   MealProvider() {
     _loadUserEmail();
   }
 
+  // Reads the cached email from SharedPreferences to construct the unique storage key
   Future<void> _loadUserEmail() async {
     final prefs = await SharedPreferences.getInstance();
     _userEmail = prefs.getString('user_email') ?? '';
     await _loadMeals();
   }
 
-  /// Returns a user+date specific storage key to isolate data per account and day
+  // Generates a unique storage key combining the user's email and today's date.
+  // Format: 'today_meals_sarah@email.com_2024-06-07'
+  // This ensures meal data is isolated per user AND per day.
   String get _storageKey {
     final today = DateTime.now();
-    final dateStr =
-        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    final dateStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
     return 'today_meals_${_userEmail.isNotEmpty ? _userEmail : "local"}_$dateStr';
   }
 
-  /// Call this after login to initialise provider with user-specific data
+  // Called after login to reinitialize the provider with the correct user's meal data
   Future<void> initForUser(String email) async {
     _userEmail = email;
     _todayMeals = [];
     await _loadMeals();
   }
 
-  /// Ajoute un repas localement et tente de le synchroniser avec le backend.
+  // addMeal(): adds a meal to today's list using the optimistic UI pattern.
+  // Step 1: Add to local list immediately → UI updates instantly (no waiting for network)
+  // Step 2: Attempt backend sync in background → keeps server data in sync
   void addMeal(FoodItem item) async {
-    // 1. Ajouter immédiatement pour une UI réactive
-    _todayMeals.add(item);
-    _saveMeals();
-    notifyListeners();
+    _todayMeals.add(item);  // Immediate local addition
+    _saveMeals();            // Save to local cache
+    notifyListeners();       // Trigger immediate UI rebuild
 
-    // 2. Tenter de sync backend
+    // Background backend sync — does NOT block the UI
     try {
       final success = await ApiService.addMeal(item);
       if (!success) {
-        debugPrint('[MealProvider] Backend sync échoué pour "${item.name}" — gardé en cache local.');
+        debugPrint('[MealProvider] Backend sync failed for "${item.name}" — kept in local cache.');
         _isBackendAvailable = false;
       } else {
         _isBackendAvailable = true;
       }
     } catch (e) {
       _isBackendAvailable = false;
-      debugPrint('[MealProvider] Erreur sync backend: $e');
+      debugPrint('[MealProvider] Backend sync error: $e');
     }
   }
 
+  // COMPUTED TOTALS — fold() accumulates values across all meals (like SQL SUM)
   int get totalCalories => _todayMeals.fold(0, (sum, item) => sum + item.calories);
   double get totalProtein => _todayMeals.fold(0.0, (sum, item) => sum + item.protein);
   double get totalCarbs => _todayMeals.fold(0.0, (sum, item) => sum + item.carbs);
   double get totalFat => _todayMeals.fold(0.0, (sum, item) => sum + item.fat);
 
-  /// Indique si le dernier appel backend a réussi
   bool get isBackendAvailable => _isBackendAvailable;
 
+  // _loadMeals(): two-phase loading strategy
+  // Phase 1: Load local cache immediately (fast, offline-ready)
+  // Phase 2: Fetch from backend in background (authoritative, replaces cache)
   Future<void> _loadMeals() async {
-    // 1. Charger immédiatement le cache local si disponible pour un affichage instantané
     try {
       final prefs = await SharedPreferences.getInstance();
       final String? jsonStr = prefs.getString(_storageKey);
       if (jsonStr != null) {
         final List<dynamic> decoded = jsonDecode(jsonStr);
         _todayMeals = decoded.map((item) => FoodItem.fromMap(item)).toList();
-        notifyListeners();
+        notifyListeners(); // Render cached data immediately
       }
     } catch (e) {
-      debugPrint('[MealProvider] Erreur lors du chargement du cache local : $e');
+      debugPrint('[MealProvider] Local cache load error: $e');
     }
-
-    // 2. Charger les données du backend en arrière-plan pour synchroniser
-    _fetchMealsFromBackend();
+    _fetchMealsFromBackend(); // Start background sync (non-blocking)
   }
 
+  // _fetchMealsFromBackend(): replaces local data with the authoritative backend data
   Future<void> _fetchMealsFromBackend() async {
     try {
       final backendMeals = await ApiService.getUserMeals();
-      // Le backend est disponible, sa réponse fait foi
-      _todayMeals = backendMeals;
+      _todayMeals = backendMeals;  // Backend is the source of truth
       _isBackendAvailable = true;
-      notifyListeners();
-      _saveMeals(); // Mettre à jour le cache local avec les données fraîches
+      notifyListeners();   // Update UI with fresh server data
+      _saveMeals();        // Update local cache with fresh data
     } catch (e) {
       _isBackendAvailable = false;
-      debugPrint('[MealProvider] Backend inaccessible lors de la sync en arrière-plan: $e');
+      debugPrint('[MealProvider] Backend unavailable during background sync: $e');
     }
   }
 
+  // _saveMeals(): serializes today's meal list to JSON and saves to SharedPreferences
   Future<void> _saveMeals() async {
     final prefs = await SharedPreferences.getInstance();
     final String encoded = jsonEncode(_todayMeals.map((m) => m.toMap()).toList());
     await prefs.setString(_storageKey, encoded);
   }
 
+  // reset(): clears all meal state (called on logout)
   void reset() {
     _todayMeals = [];
     _userEmail = '';
@@ -156,6 +199,7 @@ class MealProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // refreshMeals(): forces a fresh reload from both cache and backend (pull-to-refresh)
   Future<void> refreshMeals() async {
     _todayMeals = [];
     await _loadMeals();

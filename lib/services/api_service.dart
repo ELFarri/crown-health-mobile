@@ -1,227 +1,129 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:fitness_app/utils/constants.dart';
-import '../models/workout_model.dart';
-import '../models/food_model.dart';
-import '../models/nutrition_stat.dart';
-import '../services/auth_service.dart';
-import '../providers/meal_provider.dart' show FoodItem;
+// =================================================================================================================
+// FILE: lib/services/api_service.dart
+// PURPOSE: CORE NETWORKING LAYER — handles all HTTP communication with the Django backend.
+//          This file isolates all raw HTTP requests, JSON parsing, and error handling so the
+//          rest of the app (Providers, UI) doesn't need to deal with network logic directly.
+//
+// HOW AUTHENTICATED REQUESTS WORK:
+//   Every method here first calls AuthService.getToken() to retrieve the stored JWT access token.
+//   It then injects this token into the HTTP request headers:
+//     'Authorization': 'Bearer <token>'
+//   If the token is missing or expired, the Django backend will reject the request with HTTP 401.
+// =================================================================================================================
+
+import 'dart:convert';                                    // For encoding/decoding JSON strings
+import 'package:http/http.dart' as http;                 // The HTTP client package for making network requests
+import 'package:fitness_app/utils/constants.dart';        // App-wide constants including API base URLs
+import 'package:fitness_app/services/auth_service.dart';   // To retrieve the JWT access token for secure endpoints
+import 'package:fitness_app/providers/meal_provider.dart'; // To instantiate FoodItem objects from JSON responses
+
 
 class ApiService {
-  static const String baseUrl = Constants.baseUrl;
+  
+  // ─────────────────────────────────────────────────────────────────────────
+  // getUserMeals()
+  // PURPOSE: Fetches the authenticated user's logged meals for today.
+  // ENDPOINT: GET /api/nutrition/meals/
+  // RETURNS: A Future list of FoodItem objects. Returns empty list on failure.
+  // ─────────────────────────────────────────────────────────────────────────
+  static Future<List<FoodItem>> getUserMeals() async {
+    // 1. Get the JWT token. If null (user logged out), return empty list immediately to avoid network errors.
+    final token = await AuthService.getToken();
+    if (token == null) return [];
 
-  static Future<List<FoodItem>> getUserMeals({DateTime? date}) async {
     try {
-      final token = await AuthService.getToken();
-      // BUG FIX: always send today's date so backend returns only today's meals
-      final targetDate = date ?? DateTime.now();
-      final dateStr =
-          '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
-      final uri = Uri.parse(Constants.mealsUrl).replace(
-        queryParameters: {'date': dateStr},
-      );
+      // 2. Make the GET request to the Django backend
       final response = await http.get(
-        uri,
+        Uri.parse(Constants.mealsUrl),
         headers: {
+          'Authorization': 'Bearer $token',  // Attach the JWT token to prove identity
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
         },
       );
+
+      // 3. Check if the server responded with HTTP 200 OK
       if (response.statusCode == 200) {
-        List<dynamic> data = jsonDecode(response.body);
-        return data.map((json) => FoodItem(
-          name: json['name'] ?? 'Unknown',
-          calories: json['calories'] ?? 0,
-          protein: double.tryParse(json['protein'].toString()) ?? 0.0,
-          carbs: double.tryParse(json['carbs'].toString()) ?? 0.0,
-          fat: double.tryParse(json['fat'].toString()) ?? 0.0,
-          category: _capitalize(json['meal_type'] ?? 'General'),
-        )).toList();
+        // 4. Parse the JSON string into a Dart List of dynamic objects (dictionaries)
+        final List<dynamic> data = jsonDecode(response.body);
+        
+        // 5. Map each dictionary into a strongly-typed FoodItem instance and return the list
+        return data.map((json) => FoodItem.fromMap(json)).toList();
       }
     } catch (e) {
-      print('Meals Error: $e');
+      // Catch network errors (e.g., no internet connection)
+      print('Error fetching meals: $e');
     }
+    
+    // Return empty list as a fallback if the request fails
     return [];
   }
 
-  static String _capitalize(String s) {
-    if (s.isEmpty) return s;
-    return s[0].toUpperCase() + s.substring(1).toLowerCase();
-  }
 
-  static Future<List<NutritionStat>> getNutritionStats({String period = 'weekly'}) async {
-    try {
-      final token = await AuthService.getToken();
-      final response = await http.get(
-        Uri.parse('$baseUrl/api/nutrition/stats/?period=$period'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-      if (response.statusCode == 200) {
-        List<dynamic> data = jsonDecode(response.body);
-        return data.map((json) => NutritionStat.fromJson(json)).toList();
-      }
-    } catch (e) {
-      print('Nutrition Stats Error: $e');
-    }
-    return [];
-  }
-
+  // ─────────────────────────────────────────────────────────────────────────
+  // addMeal(FoodItem item)
+  // PURPOSE: Sends a newly logged meal to the Django backend to be saved in the database.
+  // ENDPOINT: POST /api/nutrition/meals/add/
+  // RETURNS: true if successfully saved (HTTP 201), false otherwise.
+  // ─────────────────────────────────────────────────────────────────────────
   static Future<bool> addMeal(FoodItem item) async {
+    // 1. Retrieve the JWT token
+    final token = await AuthService.getToken();
+    if (token == null) return false;
+
     try {
-      final token = await AuthService.getToken();
+      // 2. Make the POST request
       final response = await http.post(
-        Uri.parse('${Constants.mealsUrl}add/'),
+        Uri.parse(Constants.addMealUrl),
         headers: {
+          'Authorization': 'Bearer $token', // Proves identity so Django knows WHICH user logged this meal
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
         },
-        body: jsonEncode({
-          'name': item.name,
-          'calories': item.calories,
-          'protein': item.protein,
-          'carbs': item.carbs,
-          'fat': item.fat,
-          'meal_type': item.category.toLowerCase(),
-        }),
+        // 3. Serialize the FoodItem object into a JSON string body
+        body: jsonEncode(item.toMap()),
       );
+
+      // 4. HTTP 201 Created indicates successful insertion into the database
       return response.statusCode == 201;
     } catch (e) {
-      print('Add Meal Error: $e');
+      print('Error adding meal: $e');
       return false;
     }
   }
 
-  static Future<List<Map<String, dynamic>>> getUserWorkouts({DateTime? date}) async {
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // searchFoods(String query)
+  // PURPOSE: Queries the global food database (catalogue) for autocomplete suggestions.
+  // ENDPOINT: GET /api/foods/search/?q=<query>
+  // NOTE: This endpoint is public (no Auth header required).
+  // RETURNS: A list of FoodItem suggestions matching the search query.
+  // ─────────────────────────────────────────────────────────────────────────
+  static Future<List<FoodItem>> searchFoods(String query) async {
+    // Prevent hitting the server with empty queries
+    if (query.trim().isEmpty) return [];
+    
     try {
-      final token = await AuthService.getToken();
-      // BUG FIX: support date filtering so statistics_view can query any day
-      Uri uri = Uri.parse('$baseUrl/api/workouts/history/');
-      if (date != null) {
-        final dateStr =
-            '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-        uri = uri.replace(queryParameters: {'date': dateStr});
-      }
+      // Append the search query to the URL as a query parameter (?q=query)
+      final url = '${Constants.baseUrl}/api/foods/search/?q=${Uri.encodeComponent(query)}';
+      
       final response = await http.get(
-        uri,
+        Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
         },
       );
+
       if (response.statusCode == 200) {
-        List<dynamic> data = jsonDecode(response.body);
-        return data.map((json) => {
-          'id': json['id'],
-          'date': json['date'] ?? '',
-          'muscle': json['category'] ?? 'General',
-          'duration': '${json['duration']} min',
-          'calories_burned': json['calories_burned'] ?? 0,
-          'workout_name': json['workout_name'] ?? 'Workout',
-        }).toList();
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => FoodItem.fromMap(json)).toList();
       }
     } catch (e) {
-      print('Workouts Error: $e');
+      print('Error searching foods: $e');
     }
-    return [];
-  }
-
-  static Future<List<WorkoutModel>> getAllWorkouts() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/api/workouts/workouts/'),
-        headers: {'Content-Type': 'application/json'},
-      );
-      if (response.statusCode == 200) {
-        List<dynamic> data = jsonDecode(response.body);
-        return data.map((json) => WorkoutModel.fromJson(json)).toList();
-      }
-    } catch (e) {
-      print('All Workouts Error: $e');
-    }
-    return [];
-  }
-
-  static Future<bool> addUserWorkout(int workoutId, int duration) async {
-    try {
-      final token = await AuthService.getToken();
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/workouts/history/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'workout': workoutId,
-          'duration': duration,
-        }),
-      );
-      return response.statusCode == 201;
-    } catch (e) {
-      print('Add Workout Error: $e');
-      return false;
-    }
-  }
-
-  static Future<bool> clearWorkoutHistory() async {
-    try {
-      final token = await AuthService.getToken();
-      final response = await http.delete(
-        Uri.parse('$baseUrl/api/workouts/history/clear/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-      return response.statusCode == 200;
-    } catch (e) {
-      print('Clear Workout History Error: $e');
-      return false;
-    }
-  }
-
-  static Future<bool> logWorkout({
-    required String workoutName,
-    required String category,
-    required int durationMinutes,
-  }) async {
-    try {
-      final token = await AuthService.getToken();
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/workouts/history/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'workout_name': workoutName,
-          'category': category,
-          'duration': durationMinutes,
-        }),
-      );
-      return response.statusCode == 201;
-    } catch (e) {
-      print('Log Workout Error: $e');
-      return false;
-    }
-  }
-
-  static Future<List<FoodModel>> getFoods() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/api/nutrition/foods/'),
-        headers: {'Content-Type': 'application/json'},
-      );
-      if (response.statusCode == 200) {
-        List<dynamic> data = jsonDecode(response.body);
-        return data.map((json) => FoodModel.fromJson(json)).toList();
-      }
-    } catch (e) {
-      print('Foods Error: $e');
-    }
+    
     return [];
   }
 }
-
