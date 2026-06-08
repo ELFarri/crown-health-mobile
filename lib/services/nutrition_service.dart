@@ -1,88 +1,107 @@
-// =================================================================================================================
-// FILE: lib/services/nutrition_service.dart
-// PURPOSE: Handles fetching nutrition statistics from the Django backend.
-//          Powers the charts and aggregated data displayed on the Stats Screen.
-//
-// ENDPOINT USED:
-//   GET /api/nutrition/stats/?period=weekly (or monthly)
-//   This endpoint returns aggregated data (sum of calories, protein, carbs, fat) grouped by date.
-// =================================================================================================================
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:fitness_app/utils/constants.dart';
-import 'package:fitness_app/services/auth_service.dart';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// NutritionStats — Data Transfer Object
-// Represents a single day's aggregated nutritional totals.
-// ─────────────────────────────────────────────────────────────────────────────
-class NutritionStats {
-  final String date;          // e.g. "2024-06-07"
-  final int totalCalories;    // Sum of calories for that date
-  final double totalProtein;  // Sum of protein
-  final double totalCarbs;    // Sum of carbs
-  final double totalFat;      // Sum of fat
-
-  NutritionStats({
-    required this.date,
-    required this.totalCalories,
-    required this.totalProtein,
-    required this.totalCarbs,
-    required this.totalFat,
-  });
-
-  // Factory constructor to build an object from the Django API JSON response
-  factory NutritionStats.fromJson(Map<String, dynamic> json) {
-    return NutritionStats(
-      date: json['date'] ?? '',
-      totalCalories: json['total_calories'] ?? 0,
-      totalProtein: (json['total_protein'] ?? 0).toDouble(),
-      totalCarbs: (json['total_carbs'] ?? 0).toDouble(),
-      totalFat: (json['total_fat'] ?? 0).toDouble(),
-    );
-  }
-}
-
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class NutritionService {
-  
-  // ─────────────────────────────────────────────────────────────────────────
-  // getNutritionStats(String period)
-  // PURPOSE: Fetches aggregated stats for the specified period ('weekly' or 'monthly').
-  // RETURNS: A list of NutritionStats objects, ordered by date.
-  // ─────────────────────────────────────────────────────────────────────────
-  static Future<List<NutritionStats>> getNutritionStats({String period = 'weekly'}) async {
-    // Secure endpoint: requires JWT access token
-    final token = await AuthService.getToken();
-    if (token == null) return [];
+  static const String _baseUrl = 'https://world.openfoodfacts.org/api/v2';
 
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is num) return value.toInt();
+    if (value is String) return double.tryParse(value)?.toInt() ?? 0;
+    return 0;
+  }
+
+  static Future<Map<String, dynamic>?> searchByBarcode(String barcode) async {
     try {
-      // Build the URL with the period query parameter
-      final url = '${Constants.baseUrl}/api/nutrition/stats/?period=$period';
-      
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      );
+      final String targetUrl = '$_baseUrl/product/$barcode.json';
+      http.Response response;
+      if (kIsWeb) {
+        final String proxyUrl1 = 'https://api.codetabs.com/v1/proxy/?quest=${Uri.encodeComponent(targetUrl)}';
+        print('--- Web Barcode Search via Proxy 1: $proxyUrl1 ---');
+        response = await http.get(Uri.parse(proxyUrl1));
+        print('Proxy 1 response code: ${response.statusCode}');
+        
+        if (response.statusCode != 200) {
+          final String proxyUrl2 = 'https://api.allorigins.win/raw?url=${Uri.encodeComponent(targetUrl)}';
+          print('--- Barcode Proxy 1 failed, trying fallback Proxy 2: $proxyUrl2 ---');
+          response = await http.get(Uri.parse(proxyUrl2));
+          print('Proxy 2 response code: ${response.statusCode}');
+        }
+      } else {
+        response = await http.get(Uri.parse(targetUrl));
+      }
 
       if (response.statusCode == 200) {
-        // HTTP 200 OK → parse the JSON array
-        final List<dynamic> data = jsonDecode(response.body);
-        
-        // Map JSON dictionaries to strongly-typed NutritionStats objects
-        return data.map((json) => NutritionStats.fromJson(json)).toList();
-      } else {
-        print('Error fetching stats: ${response.statusCode} - ${response.body}');
+        final data = jsonDecode(response.body);
+        final status = data['status'];
+        if (status == 1 || status == '1' || status == 'found' || status == 'product_found') {
+          final product = data['product'];
+          final nutriments = product['nutriments'] ?? {};
+          return {
+            'name': product['product_name'] ?? 'Unknown Product',
+            'kcal': _parseInt(nutriments['energy-kcal_100g']),
+            'protein': _parseDouble(nutriments['proteins_100g']),
+            'carbs': _parseDouble(nutriments['carbohydrates_100g']),
+            'fat': _parseDouble(nutriments['fat_100g']),
+            'brand': product['brands'] ?? '',
+          };
+        }
       }
     } catch (e) {
-      print('Network error fetching stats: $e');
+      print('Barcode Search Error: $e');
     }
-    
-    return []; // Return empty list on failure
+    return null;
+  }
+
+  static Future<List<Map<String, dynamic>>> searchByName(String query) async {
+    print('--- Nutrition Search Triggered: query="$query", kIsWeb=$kIsWeb ---');
+    try {
+      final String targetUrl = 'https://world.openfoodfacts.org/cgi/search.pl?search_terms=$query&search_simple=1&action=process&json=1&page_size=20&lc=en';
+      
+      http.Response response;
+      if (kIsWeb) {
+        final String proxyUrl1 = 'https://api.codetabs.com/v1/proxy/?quest=${Uri.encodeComponent(targetUrl)}';
+        print('Fetching via Proxy 1 (codetabs): $proxyUrl1');
+        response = await http.get(Uri.parse(proxyUrl1));
+        print('Proxy 1 response code: ${response.statusCode}');
+        
+        if (response.statusCode != 200) {
+          final String proxyUrl2 = 'https://api.allorigins.win/raw?url=${Uri.encodeComponent(targetUrl)}';
+          print('Proxy 1 failed, trying fallback Proxy 2 (allorigins): $proxyUrl2');
+          response = await http.get(Uri.parse(proxyUrl2));
+          print('Proxy 2 response code: ${response.statusCode}');
+        }
+      } else {
+        print('Fetching directly: $targetUrl');
+        response = await http.get(Uri.parse(targetUrl));
+      }
+
+      print('Response body length: ${response.body.length}');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List products = data['products'] ?? [];
+        return products.map((p) {
+          final nutriments = p['nutriments'] ?? {};
+          return {
+            'name': p['product_name'] ?? 'Unknown',
+            'kcal': _parseInt(nutriments['energy-kcal_100g']),
+            'protein': _parseDouble(nutriments['proteins_100g']),
+            'carbs': _parseDouble(nutriments['carbohydrates_100g']),
+            'fat': _parseDouble(nutriments['fat_100g']),
+          };
+        }).toList();
+      }
+    } catch (e) {
+      print('Name Search Error: $e');
+    }
+    return [];
   }
 }
