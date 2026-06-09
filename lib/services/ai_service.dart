@@ -26,19 +26,47 @@
 //   This makes the AI Coach context-aware and able to give specific, actionable advice.
 // =================================================================================================================
 
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:google_generative_ai/google_generative_ai.dart'; // Google's official Dart SDK for Gemini AI API
 import '../providers/user_provider.dart';                         // UserProvider for biometric data access
 import '../providers/meal_provider.dart';                         // MealProvider/FoodItem for today's meal context
+import 'auth_service.dart';
+import '../utils/constants.dart';
 
 
 class AIService {
 
-  // The Gemini API authentication key.
-  // 'static const' → compiled into the app binary at build time; the same key is used for every call.
-  // SECURITY NOTE: Embedding API keys in client code is not recommended for production.
-  //   Anyone who decompiles the APK can extract this key.
-  //   Production solution: proxy all AI requests through the Django backend.
-  static const String _apiKey = 'AIzaSyC5UPSXxdDiwnFloBbQDi_VOhKkbfq5Bd4';
+  // Cached Gemini API authentication key retrieved dynamically from Django backend.
+  static String? _cachedApiKey;
+
+  // Helper method to fetch the Gemini API key from the Django backend configuration.
+  static Future<String> _getOrFetchApiKey() async {
+    if (_cachedApiKey != null) return _cachedApiKey!;
+    try {
+      final token = await AuthService.getToken();
+      if (token == null) throw Exception("User is not authenticated");
+      
+      final response = await http.get(
+        Uri.parse("${Constants.baseUrl}${Constants.authPrefix}/config/"),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        _cachedApiKey = data['gemini_api_key'];
+        return _cachedApiKey!;
+      } else {
+        throw Exception("Failed to load Gemini config: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error fetching Gemini API key: $e");
+      rethrow;
+    }
+  }
 
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -58,12 +86,15 @@ class AIService {
     List<FoodItem> todayMeals = const [],       // Optional list of today's logged meals (defaults to empty)
   }) async {
     try {
+      // Retrieve the API key dynamically from the backend
+      final apiKey = await _getOrFetchApiKey();
+
       // Instantiate the Gemini generative model.
       // model: 'gemini-2.5-flash' → fast, cost-efficient model optimized for chat and instruction following
       // apiKey: authenticates the request with Google's AI services
       final model = GenerativeModel(
         model: 'gemini-2.5-flash',
-        apiKey: _apiKey,
+        apiKey: apiKey,
       );
 
       // Build the SYSTEM INSTRUCTION string — this tells the AI who it is and provides user context.
