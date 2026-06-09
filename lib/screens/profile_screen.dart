@@ -34,24 +34,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _ageController = TextEditingController(text: user.age.toString());
   }
 
-  void _saveProfile() {
+  void _saveProfile() async {
     final user = Provider.of<UserProvider>(context, listen: false);
-    user.updateProfile(
+    final success = await user.updateProfile(
       name: _nameController.text,
       weight: double.tryParse(_weightController.text) ?? user.weight,
       height: double.tryParse(_heightController.text) ?? user.height,
       age: int.tryParse(_ageController.text) ?? user.age,
     );
     
-    setState(() => _isEditing = false);
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Profile updated and synchronized with AI Coach!', style: GoogleFonts.outfit()),
-        backgroundColor: AppTheme.nearlyDarkBlue,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    if (mounted) {
+      setState(() => _isEditing = false);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success 
+              ? 'Profile updated and synchronized with AI Coach!' 
+              : 'Profile updated locally, but backend sync failed.', 
+            style: GoogleFonts.outfit()
+          ),
+          backgroundColor: success ? AppTheme.nearlyDarkBlue : Colors.orange,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override

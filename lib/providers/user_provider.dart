@@ -198,10 +198,11 @@ class UserProvider extends ChangeNotifier {
   // ─────────────────────────────────────────────────────────────────────────
   // updateProfile()
   // PURPOSE: Updates one or more profile fields locally and persists the changes.
-  //          Does NOT send data to the backend — that's done separately in ProfileScreen.
+  //          Sends the updated fields to the Django backend via HTTP PATCH.
   // PARAMETERS: All optional (named parameters) → only provided fields are updated
+  // RETURNS: Future<bool> indicating whether the backend update succeeded.
   // ─────────────────────────────────────────────────────────────────────────
-  void updateProfile({
+  Future<bool> updateProfile({
     String? name,
     double? weight,
     double? height,
@@ -209,7 +210,7 @@ class UserProvider extends ChangeNotifier {
     Gender? gender,
     ActivityLevel? activityLevel,
     Goal? goal,
-  }) {
+  }) async {
     // Only update fields that were explicitly provided (non-null check)
     if (name != null) _name = name;
     if (weight != null) _weight = weight;
@@ -219,8 +220,76 @@ class UserProvider extends ChangeNotifier {
     if (activityLevel != null) _activityLevel = activityLevel;
     if (goal != null) _goal = goal;
 
-    _saveToPrefs();     // Persist changes to SharedPreferences
+    await _saveToPrefs();     // Persist changes to SharedPreferences
     notifyListeners();  // Notify all listening widgets to rebuild
+
+    final token = await AuthService.getToken();
+    if (token != null && token.isNotEmpty) {
+      try {
+        final Map<String, dynamic> updateData = {};
+        if (name != null) updateData['name'] = name;
+        if (weight != null) updateData['weight'] = weight;
+        if (height != null) updateData['height'] = height;
+        if (age != null) updateData['age'] = age;
+        if (gender != null) {
+          updateData['gender'] = gender == Gender.male ? 'male' : 'female';
+        }
+        if (activityLevel != null) {
+          switch (activityLevel) {
+            case ActivityLevel.sedentary:
+              updateData['activity_level'] = 'sedentary';
+              break;
+            case ActivityLevel.lightlyActive:
+              updateData['activity_level'] = 'light';
+              break;
+            case ActivityLevel.moderatelyActive:
+              updateData['activity_level'] = 'moderate';
+              break;
+            case ActivityLevel.veryActive:
+              updateData['activity_level'] = 'active';
+              break;
+            case ActivityLevel.extraActive:
+              updateData['activity_level'] = 'very_active';
+              break;
+          }
+        }
+        if (goal != null) {
+          switch (goal) {
+            case Goal.loseWeight:
+              updateData['goal'] = 'loss';
+              break;
+            case Goal.gainMuscle:
+              updateData['goal'] = 'gain';
+              break;
+            case Goal.maintain:
+              updateData['goal'] = 'maintain';
+              break;
+          }
+        }
+
+        final response = await http.patch(
+          Uri.parse(Constants.profileUrl),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode(updateData),
+        );
+
+        if (response.statusCode == 200) {
+          debugPrint('Profile updated on backend successfully');
+          return true;
+        } else {
+          debugPrint('Failed to update profile on backend: ${response.statusCode} ${response.body}');
+          return false;
+        }
+      } catch (e) {
+        debugPrint('Error updating profile on backend: $e');
+        return false;
+      }
+    }
+    return true;
   }
 
   // Updates the onboarding completion flag and persists it
